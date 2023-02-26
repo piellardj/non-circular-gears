@@ -15,6 +15,10 @@ type ConstructionResult = {
     error: number; // in [0, 1]
 };
 
+type Segment = {
+    deltaAngle: number;
+    deltaDistance: number;
+};
 
 class Gear {
     public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
@@ -98,7 +102,7 @@ class Gear {
     }
 
     public static circle(center: ReadonlyPoint, radius: number): Gear {
-        const periodCount = 180;
+        const periodCount = 60;
         const raysCount = 2 * periodCount;
 
         const rays: Ray[] = [];
@@ -115,7 +119,7 @@ class Gear {
 
     public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
         const periodCount = 2;
-        const periodStepsCount = 180;
+        const periodStepsCount = 60;
         const rays: Ray[] = [];
         for (let i = 0; i < periodStepsCount; i++) {
             const percentage = i / periodStepsCount;
@@ -278,33 +282,59 @@ class Gear {
         let cumulatedAngle = this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        let iRay = 0;
-        while (cumulatedAngle < this.rotation) {
-            const currentRay = this.rays[iRay % this.rays.length]!;
-            const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
+        for (const segment of this.iterateOnSegments()) {
+            const nextCumulatedAngle = cumulatedAngle + segment.deltaAngle;
+            const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
-            cumulatedAngle += computeDeltaAngle(nextRay, currentRay);
-            cumulatedSurface += computeDistance(nextRay, currentRay);
-            iRay++;
+            if (nextCumulatedAngle >= this.rotation) {
+                let partial = 0;
+                if (segment.deltaAngle > 0) {
+                    partial = (nextCumulatedAngle - this.rotation) / segment.deltaAngle * segment.deltaDistance; // approximation
+                }
+                return cumulatedSurface + partial;
+            }
+
+            cumulatedAngle = nextCumulatedAngle
+            cumulatedSurface = nextCumulatedSurface;
         }
-
-        return cumulatedSurface;
+        throw new Error();
     }
 
-    private rotateFromSurface(surface: number): void {
-        const nbPeriods = Math.floor(surface / this.periodSurface);
+    private rotateFromSurface(targetSurface: number): void {
+        const nbPeriods = Math.floor(targetSurface / this.periodSurface);
         this.rotation = -this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
+        for (const segment of this.iterateOnSegments()) {
+            const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
+
+            if (nextCumulatedSurface >= targetSurface) {
+                if (segment.deltaDistance > 0) {
+                    const partial = (nextCumulatedSurface - targetSurface) / segment.deltaDistance * segment.deltaAngle; // approximation
+                    this.rotation -= partial;
+                }
+                return;
+            }
+
+            cumulatedSurface = nextCumulatedSurface;
+            this.rotation -= segment.deltaAngle;
+        }
+    }
+
+    private *iterateOnSegments(): Generator<Segment> {
         let iRay = 0;
-        while (cumulatedSurface < surface) {
+        while (1) {
             const currentRay = this.rays[iRay % this.rays.length]!;
             const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
 
-            cumulatedSurface += computeDistance(nextRay, currentRay);
-            this.rotation -= computeDeltaAngle(nextRay, currentRay);
-
+            const deltaAngle = computeDeltaAngle(nextRay, currentRay);
+            const deltaDistance = computeDistance(nextRay, currentRay);
             iRay++;
+
+            yield {
+                deltaAngle,
+                deltaDistance,
+            };
         }
     }
 }
