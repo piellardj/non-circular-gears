@@ -5,11 +5,27 @@ type Ray = {
     angle: number;
 };
 
-type TryResult = {
-    distance: number;
-    periodicity: number;
-    error: number;
+type ReadonlyPoint = {
+    readonly x: number;
+    readonly y: number;
 };
+
+type ConstructionResult = {
+    distance: number;
+    periodRays: Ray[];
+    period: number; // can be fractional
+    targetPeriod: number; // integer
+    error: number; // in [0, 1]
+};
+
+const TWO_PI = 2 * Math.PI;
+
+// function normalizeAngle(angle: number): number {
+//     if (angle < 0) {
+//         angle += TWO_PI * Math.ceil(-angle / TWO_PI);
+//     }
+//     return angle % TWO_PI;
+// }
 
 class Gear {
     public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
@@ -24,15 +40,15 @@ class Gear {
 
         // draw body
         {
-            context.fillStyle = "rgba(255,0,0,0.1)";
+            context.fillStyle = "rgba(255,0,0,0.3)";
             context.strokeStyle = "red";
 
             for (const gear of gears) {
                 context.beginPath();
-                gear.rays.forEach((part: Ray, index: number) => {
+                gear.rays.forEach((ray: Ray, index: number) => {
                     const point = {
-                        x: gear.center.x + part.radius * Math.cos(part.angle + gear.rotation),
-                        y: gear.center.y + part.radius * Math.sin(part.angle + gear.rotation),
+                        x: gear.center.x + ray.radius * Math.cos(ray.angle),
+                        y: gear.center.y + ray.radius * Math.sin(ray.angle),
                     };
                     normalize(point);
 
@@ -62,13 +78,13 @@ class Gear {
                 normalize(center);
                 context.moveTo(center.x, center.y);
 
-                const part = gear.rays[0];
-                if (!part) {
-                    throw new Error("Gear has no parts.");
+                const firstRay = gear.rays[0];
+                if (!firstRay) {
+                    throw new Error("Gear has no rays.");
                 }
                 const point = {
-                    x: gear.center.x + part.radius * Math.cos(part.angle + gear.rotation),
-                    y: gear.center.y + part.radius * Math.sin(part.angle + gear.rotation),
+                    x: gear.center.x + firstRay.radius * Math.cos(firstRay.angle),
+                    y: gear.center.y + firstRay.radius * Math.sin(firstRay.angle),
                 };
                 normalize(point);
                 context.lineTo(point.x, point.y);
@@ -85,58 +101,118 @@ class Gear {
                 const center = { x: gear.center.x, y: gear.center.y };
                 normalize(center);
                 context.beginPath();
-                context.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+                context.arc(center.x, center.y, radius, 0, TWO_PI);
                 context.closePath();
                 context.fill();
             }
         }
     }
 
-    public periodicity: number = 1;
-    public rotation: number = 0;
-    private readonly center: Point;
+    public static circle(center: ReadonlyPoint, radius: number): Gear {
+        const raysCount = 2 * 180;
 
-    private readonly rays: Ray[] = [];
-
-    public constructor() {
-        this.center = { x: 0, y: 0 };
-
-        const step = 2 * Math.PI / 360;
-
-        const a = 0.3;
-        const b = 0.15;
-
-        for (let i = 0; i < 2 * Math.PI; i += step) {
-            this.rays.push({
-                radius: a * b / Math.sqrt(Math.pow(b * Math.cos(i), 2) + Math.pow(a * Math.sin(i), 2)),
-                angle: i,
+        const rays: Ray[] = [];
+        for (let i = 0; i < 2; i++) {
+            const percentage = i / raysCount;
+            const angle = TWO_PI * percentage;
+            rays.push({
+                radius,
+                angle,
             });
         }
+        return new Gear(center, rays, raysCount / 2);
     }
 
-    public change(center: Point, other: Gear): void {
-        const dX = center.x - other.center.x;
-        const dY = center.y - other.center.y;
-        const idealDistance = Math.sqrt(dX * dX + dY * dY);
+    public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
+        const periodStepsCount = 180;
+        const rays: Ray[] = [];
+        for (let i = 0; i < periodStepsCount; i++) {
+            const percentage = i / periodStepsCount;
+            const angle = Math.PI * percentage;
+            rays.push({
+                radius: a * b / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)),
+                angle,
+            });
+        }
 
-        const initialTry = this.tryChange(idealDistance, other);
+        return new Gear(center, rays, 2);
+    }
+
+    public static slaveGear(idealCenter: ReadonlyPoint, master: Gear): Gear | null {
+        const dX = idealCenter.x - master.center.x;
+        const dY = idealCenter.y - master.center.y;
+        const idealDistance = Math.max(master.maxRadius + 0.0001, Math.sqrt(dX * dX + dY * dY));
+
+        const adjustedDistance = Gear.getNextFittingDistance(idealDistance, master);
+        const period = Gear.tryBuildCompanionPeriod(adjustedDistance, master);
+
+        const center = { x: adjustedDistance, y: 0 };
+        return new Gear(center, period.periodRays, period.targetPeriod);
+    }
+
+    private static tryBuildCompanionPeriod(distance: number, master: Gear): ConstructionResult {
+        const periodRays: Ray[] = [];
+        let angle = 0;
+        periodRays.push({
+            angle,
+            radius: distance - master.periodRays[0]!.radius,
+        });
+
+        for (let i = 0; i < master.periodRays.length - 1; i++) {
+            const otherRay1 = master.rays[i % master.rays.length]!;
+            const otherRay2 = master.rays[(i + 1) % master.rays.length]!;
+
+            const otherAngle1 = otherRay1.angle;
+            const otherAngle2 = (i === master.periodRays.length - 1) ? TWO_PI : otherRay2.angle;
+            const otherR1 = otherRay1.radius;
+            const otherR2 = otherRay2.radius;
+            const dOtherAngle = otherAngle2 - otherAngle1;
+            const dSegmentLengthSquared = (otherR1 * otherR1) + (otherR2 * otherR2) - 2 * otherR1 * otherR2 * Math.cos(dOtherAngle);
+
+            const r1 = distance - otherR1;
+            const r2 = distance - otherR2;
+            const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
+            if (isNaN(dAngle)) {
+                throw new Error("Should not happen");
+            }
+
+            angle -= dAngle;
+            periodRays.push({
+                angle: -angle,
+                radius: r2,
+            });
+        }
+
+        const lastAngle = -angle;
+        const period = TWO_PI / lastAngle;
+        const targetPeriod = Math.ceil(period);
+        const error = targetPeriod - period;
+        return {
+            distance,
+            periodRays,
+            period,
+            targetPeriod,
+            error,
+        };
+    }
+
+    private static getNextFittingDistance(idealDistance: number, master: Gear): number {
+        const initialTry = Gear.tryBuildCompanionPeriod(idealDistance, master);
 
         let tooLowTry = initialTry;
-        let tooHighTry = null as TryResult | null;
+        let tooHighTry = null as ConstructionResult | null;
 
         const maxTries = 200;
         let triesCount = 1;
-        while (tooLowTry.error > 0.0001 && triesCount < maxTries) {
-            const currentDistance = tooHighTry ? 0.5 * (tooLowTry.distance + tooHighTry.distance) : tooLowTry.distance + 1;
+        while (tooLowTry.error > 0 && triesCount < maxTries) {
+            const currentDistance = tooHighTry ? 0.5 * (tooLowTry.distance + tooHighTry.distance) : tooLowTry.distance + 0.5;
             if (currentDistance === tooLowTry.distance || currentDistance === tooHighTry?.distance) {
-                // console.log("Convergence");
+                console.debug("Convergence");
                 break;
             }
 
-            const currentTry = this.tryChange(currentDistance, other);
-            // let gap = tooHighTry ? tooHighTry?.distance - tooLowTry.distance : null;
-            // console.log(`distance: ${currentTry.distance}\t\t\terror ${currentTry.error}\t\tgap ${gap}\t\ttoo low ${JSON.stringify(tooLowTry)}\t\ttoo high ${JSON.stringify(tooHighTry)}`);
-            if (currentTry.periodicity > tooLowTry.periodicity || currentTry.error > tooLowTry.error) {
+            const currentTry = Gear.tryBuildCompanionPeriod(currentDistance, master);
+            if (currentTry.targetPeriod > tooLowTry.targetPeriod || currentTry.error > tooLowTry.error) {
                 tooHighTry = currentTry;
             } else {
                 tooLowTry = currentTry;
@@ -145,72 +221,34 @@ class Gear {
         }
 
         const finalTry = tooLowTry;
-        console.log(`Final error ${finalTry.error} obtained in ${triesCount} tries. Final periodicity ${finalTry.periodicity}, initial was ${initialTry.periodicity}.`);
-
-        this.center.x = finalTry.distance;
-        this.center.y = 0;
-        this.periodicity = finalTry.periodicity;
-        // this.rotation = Math.atan2(dY, dX);
-        // this.center.x = finalTry.distance * Math.cos(this.rotation);
-        // this.center.y = finalTry.distance * Math.sin(this.rotation);
+        console.debug(`Final error ${finalTry.error} obtained in ${triesCount} tries. Final periodicity ${finalTry.targetPeriod}, initial was ${initialTry.targetPeriod}.`);
+        return finalTry.distance;
     }
 
-    /* Returns matching score */
-    private tryChange(distance: number, other: Gear): TryResult {
-        this.rays.length = 0;
+    private readonly rays: ReadonlyArray<Ray>;
+    private readonly maxRadius: number;
 
-        const otherFirstRay = other.rays[0];
-        if (!otherFirstRay) {
-            throw new Error("No ray :(");
-        }
-
-        const initialAngle = Math.PI - otherFirstRay.angle;
-        let angle = initialAngle;
-        this.rays.push({
-            radius: distance - otherFirstRay.radius,
-            angle,
+    private constructor(
+        private readonly center: ReadonlyPoint,
+        private readonly periodRays: ReadonlyArray<Ray>,
+        periods: number) {
+        let maxRadius = -10000000000;
+        periodRays.forEach(ray => {
+            maxRadius = Math.max(ray.radius, maxRadius);
         });
+        this.maxRadius = maxRadius;
 
-        let periodicity = 1;
-        let i = 0;
-        while (1) {
-            const otherRay1 = other.rays[i % other.rays.length]!;
-            const otherRay2 = other.rays[(i + 1) % other.rays.length]!;
-
-            const otherR1 = otherRay1.radius;
-            const otherR2 = otherRay2.radius;
-            const dOtherAngle = otherRay2.angle - otherRay1.angle;
-            const dSegmentLengthSquared = (otherR1 * otherR1) + (otherR2 * otherR2) - 2 * otherR1 * otherR2 * Math.cos(dOtherAngle);
-
-            const r1 = distance - otherR1;
-            const r2 = distance - otherR2;
-            const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
-            if (isNaN(dAngle)) {
-                throw new Error(":(");
-            }
-
-            angle -= dAngle;
-            if (Math.abs(angle - initialAngle) >= 2 * Math.PI) {
-                break;
-            }
-            this.rays.push({
-                radius: r2,
-                angle,
+        const rays: Ray[] = [];
+        for (let iP = 0; iP < periods; iP++) {
+            const periodStartingAngle = TWO_PI * iP / periods;
+            periodRays.forEach(periodRay => {
+                rays.push({
+                    radius: periodRay.radius,
+                    angle: periodStartingAngle + periodRay.angle,
+                })
             });
-
-            i++;
-
-            if (i >= other.rays.length) {
-                periodicity++;
-                i %= other.rays.length;
-            }
         }
-
-        return {
-            distance,
-            periodicity,
-            error: other.rays.length - i,
-        };
+        this.rays = rays;
     }
 }
 

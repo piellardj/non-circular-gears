@@ -22,25 +22,30 @@ function getContext(): CanvasRenderingContext2D {
 
 function main(): void {
     const context = getContext();
-    const gear = new Gear();
-    const other = new Gear();
-
-    other.change({ x: 0.7, y: 0 }, gear);
+    const mainGear = Gear.ellipsis({ x: 0, y: 0 }, 0.2, 0.1);
+    // const mainGear = Gear.circle({ x: 0, y: 0 }, 0.2);
+    let other: Gear | null = Gear.slaveGear({ x: 0.7, y: 0 }, mainGear);
 
     Page.Canvas.Observers.mouseMove.push((): void => {
         if (Page.Canvas.isMouseDown()) {
             const mousePosition = Page.Canvas.getMousePosition();
-            other.change({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, gear);
+            other = Gear.slaveGear({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, mainGear);
+
+            const canvas = Page.Canvas.getCanvas();
+            if (canvas) {
+                canvas.style.cursor = other ? "" : "not-allowed";
+            }
         }
     });
 
     function mainLoop(): void {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        gear.rotation = Math.PI / 180 * performance.now() / 20;
-        other.rotation = (Math.PI - gear.rotation) / other.periodicity;
-
-        Gear.draw(context, gear, other);
+        const gears = [mainGear];
+        if (other) {
+            gears.push(other);
+        }
+        Gear.draw(context, ...gears);
         requestAnimationFrame(mainLoop);
     }
 
