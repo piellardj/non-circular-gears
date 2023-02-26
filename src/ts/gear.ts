@@ -89,7 +89,7 @@ class Gear {
         // draw centers
         {
             context.fillStyle = "green";
-            const radius = factor * 0.02;
+            const radius = factor * 0.01;
             for (const gear of gears) {
                 const center = { x: gear.center.x, y: gear.center.y };
                 normalize(center);
