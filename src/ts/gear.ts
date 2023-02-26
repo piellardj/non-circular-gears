@@ -1,9 +1,6 @@
 import { Point } from "./point";
-
-type Ray = {
-    radius: number;
-    angle: number;
-};
+import { computeDeltaAngle, computeDistance, computeDistanceSquared, Ray } from "./rays";
+import { makeAnglePositive, normalizeAngle, TWO_PI } from "./utils";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -18,35 +15,6 @@ type ConstructionResult = {
     error: number; // in [0, 1]
 };
 
-const TWO_PI = 2 * Math.PI;
-
-function makeAnglePositive(angle: number): number {
-    if (angle < 0) {
-        angle += TWO_PI * Math.ceil(-angle / TWO_PI);
-    }
-    return angle;
-}
-function normalizeAngle(angle: number): number {
-    angle = makeAnglePositive(angle);
-    return angle % TWO_PI;
-}
-
-function computeDeltaAngle(ray1: Ray, ray2: Ray): number {
-    const angle1 = normalizeAngle(ray1.angle);
-    const angle2 = normalizeAngle(ray2.angle);
-
-    const rawDifference = angle2 - angle1;
-    return Math.min(normalizeAngle(rawDifference), normalizeAngle(-rawDifference));
-}
-
-function computeDistanceSquared(ray1: Ray, ray2: Ray): number {
-    let deltaAngle = computeDeltaAngle(ray1, ray2);
-    return (ray1.radius * ray1.radius) + (ray2.radius * ray2.radius) - 2 * ray1.radius * ray2.radius * Math.cos(deltaAngle);
-}
-
-function computeDistance(ray1: Ray, ray2: Ray): number {
-    return Math.sqrt(computeDistanceSquared(ray1, ray2));
-}
 
 class Gear {
     public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
