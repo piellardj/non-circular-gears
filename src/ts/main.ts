@@ -24,7 +24,8 @@ function main(): void {
     const context = getContext();
     const mainGear = Gear.ellipsis({ x: 0, y: 0 }, 0.2, 0.1);
     // const mainGear = Gear.circle({ x: 0, y: 0 }, 0.2);
-    let other: Gear | null = Gear.slaveGear({ x: 0.7, y: 0 }, mainGear);
+    let other: Gear | null = Gear.slaveGear({ x: 0.4, y: 0 }, mainGear);
+    const otherFixed = Gear.slaveGear({ x: -0.6, y: 0 }, mainGear)!;
 
     Page.Canvas.Observers.mouseMove.push((): void => {
         if (Page.Canvas.isMouseDown()) {
@@ -41,9 +42,15 @@ function main(): void {
     function mainLoop(): void {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        const gears = [mainGear];
+        mainGear.setRotation(performance.now() / 200);
+
+        const gears = [mainGear, otherFixed];
         if (other) {
             gears.push(other);
+        }
+
+        for (const gear of gears) {
+            gear.update();
         }
         Gear.draw(context, ...gears);
         requestAnimationFrame(mainLoop);

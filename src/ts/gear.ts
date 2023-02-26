@@ -20,12 +20,33 @@ type ConstructionResult = {
 
 const TWO_PI = 2 * Math.PI;
 
-// function normalizeAngle(angle: number): number {
-//     if (angle < 0) {
-//         angle += TWO_PI * Math.ceil(-angle / TWO_PI);
-//     }
-//     return angle % TWO_PI;
-// }
+function makeAnglePositive(angle: number): number {
+    if (angle < 0) {
+        angle += TWO_PI * Math.ceil(-angle / TWO_PI);
+    }
+    return angle;
+}
+function normalizeAngle(angle: number): number {
+    angle = makeAnglePositive(angle);
+    return angle % TWO_PI;
+}
+
+function computeDeltaAngle(ray1: Ray, ray2: Ray): number {
+    const angle1 = normalizeAngle(ray1.angle);
+    const angle2 = normalizeAngle(ray2.angle);
+
+    const rawDifference = angle2 - angle1;
+    return Math.min(normalizeAngle(rawDifference), normalizeAngle(-rawDifference));
+}
+
+function computeDistanceSquared(ray1: Ray, ray2: Ray): number {
+    let deltaAngle = computeDeltaAngle(ray1, ray2);
+    return (ray1.radius * ray1.radius) + (ray2.radius * ray2.radius) - 2 * ray1.radius * ray2.radius * Math.cos(deltaAngle);
+}
+
+function computeDistance(ray1: Ray, ray2: Ray): number {
+    return Math.sqrt(computeDistanceSquared(ray1, ray2));
+}
 
 class Gear {
     public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
@@ -47,8 +68,8 @@ class Gear {
                 context.beginPath();
                 gear.rays.forEach((ray: Ray, index: number) => {
                     const point = {
-                        x: gear.center.x + ray.radius * Math.cos(ray.angle),
-                        y: gear.center.y + ray.radius * Math.sin(ray.angle),
+                        x: gear.center.x + ray.radius * Math.cos(ray.angle + gear.rotation),
+                        y: gear.center.y + ray.radius * Math.sin(ray.angle + gear.rotation),
                     };
                     normalize(point);
 
@@ -83,8 +104,8 @@ class Gear {
                     throw new Error("Gear has no rays.");
                 }
                 const point = {
-                    x: gear.center.x + firstRay.radius * Math.cos(firstRay.angle),
-                    y: gear.center.y + firstRay.radius * Math.sin(firstRay.angle),
+                    x: gear.center.x + firstRay.radius * Math.cos(firstRay.angle + gear.rotation),
+                    y: gear.center.y + firstRay.radius * Math.sin(firstRay.angle + gear.rotation),
                 };
                 normalize(point);
                 context.lineTo(point.x, point.y);
@@ -109,7 +130,8 @@ class Gear {
     }
 
     public static circle(center: ReadonlyPoint, radius: number): Gear {
-        const raysCount = 2 * 180;
+        const periodCount = 180;
+        const raysCount = 2 * periodCount;
 
         const rays: Ray[] = [];
         for (let i = 0; i < 2; i++) {
@@ -120,10 +142,11 @@ class Gear {
                 angle,
             });
         }
-        return new Gear(center, rays, raysCount / 2);
+        return new Gear(center, rays, periodCount);
     }
 
     public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
+        const periodCount = 2;
         const periodStepsCount = 180;
         const rays: Ray[] = [];
         for (let i = 0; i < periodStepsCount; i++) {
@@ -134,20 +157,26 @@ class Gear {
                 angle,
             });
         }
-
-        return new Gear(center, rays, 2);
+        return new Gear(center, rays, periodCount);
     }
 
     public static slaveGear(idealCenter: ReadonlyPoint, master: Gear): Gear | null {
         const dX = idealCenter.x - master.center.x;
         const dY = idealCenter.y - master.center.y;
-        const idealDistance = Math.max(master.maxRadius + 0.0001, Math.sqrt(dX * dX + dY * dY));
+        const idealDistance = Math.max(master.maxRadius + 0.01, Math.sqrt(dX * dX + dY * dY));
 
         const adjustedDistance = Gear.getNextFittingDistance(idealDistance, master);
         const period = Gear.tryBuildCompanionPeriod(adjustedDistance, master);
 
-        const center = { x: adjustedDistance, y: 0 };
-        return new Gear(center, period.periodRays, period.targetPeriod);
+        const angle = Math.atan2(dY, dX);
+        const center = {
+            x: master.center.x + adjustedDistance * Math.cos(angle),
+            y: master.center.y + adjustedDistance * Math.sin(angle),
+        };
+        const newGear = new Gear(center, period.periodRays, period.targetPeriod);
+        newGear.parent = master;
+
+        return newGear;
     }
 
     private static tryBuildCompanionPeriod(distance: number, master: Gear): ConstructionResult {
@@ -158,19 +187,13 @@ class Gear {
             radius: distance - master.periodRays[0]!.radius,
         });
 
-        for (let i = 0; i < master.periodRays.length - 1; i++) {
+        for (let i = 0; i < master.periodRays.length; i++) {
             const otherRay1 = master.rays[i % master.rays.length]!;
             const otherRay2 = master.rays[(i + 1) % master.rays.length]!;
+            const dSegmentLengthSquared = computeDistanceSquared(otherRay1, otherRay2);
 
-            const otherAngle1 = otherRay1.angle;
-            const otherAngle2 = (i === master.periodRays.length - 1) ? TWO_PI : otherRay2.angle;
-            const otherR1 = otherRay1.radius;
-            const otherR2 = otherRay2.radius;
-            const dOtherAngle = otherAngle2 - otherAngle1;
-            const dSegmentLengthSquared = (otherR1 * otherR1) + (otherR2 * otherR2) - 2 * otherR1 * otherR2 * Math.cos(dOtherAngle);
-
-            const r1 = distance - otherR1;
-            const r2 = distance - otherR2;
+            const r1 = distance - otherRay1.radius;
+            const r2 = distance - otherRay2.radius;
             const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
             if (isNaN(dAngle)) {
                 throw new Error("Should not happen");
@@ -182,6 +205,8 @@ class Gear {
                 radius: r2,
             });
         }
+
+        periodRays.pop();
 
         const lastAngle = -angle;
         const period = TWO_PI / lastAngle;
@@ -226,14 +251,19 @@ class Gear {
     }
 
     private readonly rays: ReadonlyArray<Ray>;
+    private readonly periodAngle: number;
+    private readonly periodSurface: number;
     private readonly maxRadius: number;
+    private parent: Gear | null = null;
+    private rotation: number = 0;
 
     private constructor(
         private readonly center: ReadonlyPoint,
         private readonly periodRays: ReadonlyArray<Ray>,
-        periods: number) {
+        private readonly periods: number) {
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
+            ray.angle = normalizeAngle(ray.angle);
             maxRadius = Math.max(ray.radius, maxRadius);
         });
         this.maxRadius = maxRadius;
@@ -244,11 +274,70 @@ class Gear {
             periodRays.forEach(periodRay => {
                 rays.push({
                     radius: periodRay.radius,
-                    angle: periodStartingAngle + periodRay.angle,
-                })
+                    angle: normalizeAngle(periodStartingAngle + periodRay.angle),
+                });
             });
         }
         this.rays = rays;
+
+        this.periodAngle = TWO_PI / this.periods;
+        this.periodSurface = 0;
+        for (let i = 0; i < periodRays.length; i++) {
+            const ray = this.rays[i]!;
+            const nextRay = this.rays[(i + 1) % this.rays.length]!;
+            this.periodSurface += computeDistance(ray, nextRay);
+        }
+    }
+
+    public setRotation(rotation: number): void {
+        if (this.parent) {
+            throw new Error("Cannot rotate child gear.");
+        }
+        this.rotation = makeAnglePositive(rotation);
+    }
+
+    public update(): void {
+        if (!this.parent) {
+            return; // nothing to do
+        }
+
+        const surfaceRotation = this.parent.getCurrentRotatedSurface();
+        this.rotateFromSurface(surfaceRotation);
+    }
+
+    private getCurrentRotatedSurface(): number {
+        const nbPeriods = Math.floor(this.rotation / this.periodAngle);
+        let cumulatedAngle = this.periodAngle * nbPeriods;
+        let cumulatedSurface = this.periodSurface * nbPeriods;
+
+        let iRay = 0;
+        while (cumulatedAngle < this.rotation) {
+            const currentRay = this.rays[iRay % this.rays.length]!;
+            const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
+
+            cumulatedAngle += computeDeltaAngle(nextRay, currentRay);
+            cumulatedSurface += computeDistance(nextRay, currentRay);
+            iRay++;
+        }
+
+        return cumulatedSurface;
+    }
+
+    private rotateFromSurface(surface: number): void {
+        const nbPeriods = Math.floor(surface / this.periodSurface);
+        this.rotation = -this.periodAngle * nbPeriods;
+        let cumulatedSurface = this.periodSurface * nbPeriods;
+
+        let iRay = 0;
+        while (cumulatedSurface < surface) {
+            const currentRay = this.rays[iRay % this.rays.length]!;
+            const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
+
+            cumulatedSurface += computeDistance(nextRay, currentRay);
+            this.rotation -= computeDeltaAngle(nextRay, currentRay);
+
+            iRay++;
+        }
     }
 }
 
