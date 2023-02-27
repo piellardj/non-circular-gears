@@ -101,6 +101,18 @@ class Gear {
                 context.fill();
             }
         }
+
+        // draw text
+        {
+            context.fillStyle = "white";
+            context.font = "16px serif";
+            for (const gear of gears) {
+                const text = (180 * gear.rotation / Math.PI).toFixed();
+                const center = { x: gear.center.x, y: gear.center.y };
+                normalize(center);
+                context.fillText(text, center.x, center.y);
+            }
+        }
     }
 
     public static circle(center: ReadonlyPoint, radius: number): Gear {
