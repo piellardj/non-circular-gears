@@ -333,14 +333,12 @@ class Gear {
     }
 
     private *iterateOnSegments(): Generator<Segment> {
-        let iRay = 0;
-        while (1) {
+        for (let iRay = 0; true; iRay++) {
             const currentRay = this.rays[iRay % this.rays.length]!;
             const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
 
             const deltaAngle = computeDeltaAngle(nextRay, currentRay);
             const deltaDistance = computeDistance(nextRay, currentRay);
-            iRay++;
 
             yield {
                 deltaAngle,
