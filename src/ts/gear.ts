@@ -1,5 +1,5 @@
 import { Point } from "./point";
-import { computeDeltaAngle, computeDistance, computeDistanceSquared, Ray } from "./rays";
+import { computeDeltaAngle, computeDistance, Ray } from "./rays";
 import { makeAnglePositive, normalizeAngle, TWO_PI } from "./utils";
 
 type ReadonlyPoint = {
@@ -18,6 +18,8 @@ type ConstructionResult = {
 type Segment = {
     deltaAngle: number;
     deltaDistance: number;
+    rayFrom: Ray;
+    rayTo: Ray;
 };
 
 class Gear {
@@ -154,31 +156,24 @@ class Gear {
     private static tryBuildCompanionPeriod(distance: number, master: Gear): ConstructionResult {
         const periodRays: Ray[] = [];
         let angle = 0;
-        periodRays.push({
-            angle,
-            radius: distance - master.periodRays[0]!.radius,
-        });
 
-        for (let i = 0; i < master.periodRays.length; i++) {
-            const otherRay1 = master.rays[i % master.rays.length]!;
-            const otherRay2 = master.rays[(i + 1) % master.rays.length]!;
-            const dSegmentLengthSquared = computeDistanceSquared(otherRay1, otherRay2);
+        for (const periodSegment of master.iterateOnPeriodSegments()) {
+            periodRays.push({
+                angle: -angle,
+                radius: distance - periodSegment.rayFrom.radius,
+            });
 
-            const r1 = distance - otherRay1.radius;
-            const r2 = distance - otherRay2.radius;
+            const dSegmentLengthSquared = periodSegment.deltaDistance * periodSegment.deltaDistance;
+
+            const r1 = distance - periodSegment.rayFrom.radius;
+            const r2 = distance - periodSegment.rayTo.radius;
             const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
             if (isNaN(dAngle)) {
                 throw new Error("Should not happen");
             }
 
             angle -= dAngle;
-            periodRays.push({
-                angle: -angle,
-                radius: r2,
-            });
         }
-
-        periodRays.pop();
 
         const lastAngle = -angle;
         const period = TWO_PI / lastAngle;
@@ -240,9 +235,16 @@ class Gear {
         });
         this.maxRadius = maxRadius;
 
+        this.periodAngle = TWO_PI / this.periodsCount;
+
+        this.periodSurface = 0;
+        for (const segment of this.iterateOnPeriodSegments()) {
+            this.periodSurface += segment.deltaDistance;
+        }
+
         const rays: Ray[] = [];
         for (let iP = 0; iP < periodsCount; iP++) {
-            const periodStartingAngle = TWO_PI * iP / periodsCount;
+            const periodStartingAngle = iP * this.periodAngle;
             periodRays.forEach(periodRay => {
                 rays.push({
                     angle: normalizeAngle(periodStartingAngle + periodRay.angle),
@@ -251,14 +253,6 @@ class Gear {
             });
         }
         this.rays = rays;
-
-        this.periodAngle = TWO_PI / this.periodsCount;
-        this.periodSurface = 0;
-        for (let i = 0; i < periodRays.length; i++) {
-            const ray = this.rays[i]!;
-            const nextRay = this.rays[(i + 1) % this.rays.length]!;
-            this.periodSurface += computeDistance(ray, nextRay);
-        }
     }
 
     public setRotation(rotation: number): void {
@@ -343,6 +337,32 @@ class Gear {
             yield {
                 deltaAngle,
                 deltaDistance,
+                rayFrom: currentRay,
+                rayTo: nextRay,
+            };
+        }
+    }
+
+    private *iterateOnPeriodSegments(): Generator<Segment> {
+        for (let i = 0; i < this.periodRays.length; i++) {
+            const currentRay = this.periodRays[i]!;
+            let nextRay = this.periodRays[i + 1];
+            if (!nextRay) {
+                const firstPeriodRay = this.periodRays[0]!
+                nextRay = {
+                    angle: firstPeriodRay.angle + TWO_PI / this.periodsCount,
+                    radius: firstPeriodRay.radius,
+                };
+            }
+
+            const deltaAngle = computeDeltaAngle(nextRay, currentRay);
+            const deltaDistance = computeDistance(nextRay, currentRay);
+
+            yield {
+                deltaAngle,
+                deltaDistance,
+                rayFrom: currentRay,
+                rayTo: nextRay,
             };
         }
     }
