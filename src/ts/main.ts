@@ -1,7 +1,5 @@
 /// <reference types="./page-interface-generated" />
 
-import { Gear } from "./engine/gear";
-import { Parameters } from "./parameters";
 import { RandomScene } from "./scenes/random-scene";
 
 function getContext(): CanvasRenderingContext2D {

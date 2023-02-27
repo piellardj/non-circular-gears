@@ -4,12 +4,33 @@ import { Parameters } from "../parameters";
 import { distance, distanceSquared } from "../utils";
 
 abstract class Scene {
-    public mainGear: Gear;
+    protected readonly mainGear: Gear;
     protected secondaryGears: Gear[] = [];
 
     private mobileGear: Gear | null = null;
 
-    protected constructor() {
+    protected constructor(mainGear: Gear) {
+        this.mainGear = mainGear;
+    }
+
+    public draw(context: CanvasRenderingContext2D): void {
+        if (this.mobileGear) {
+            Gear.draw(context, this.mainGear, this.mobileGear, ...this.secondaryGears);
+        } else {
+            Gear.draw(context, this.mainGear, ...this.secondaryGears);
+        }
+    }
+
+    public update(dt: number): void {
+        this.mainGear.rotate(5 * dt * Parameters.rotationSpeed / 1000);
+
+        for (const secondaryGear of this.secondaryGears) {
+            secondaryGear.update();
+        }
+        this.mobileGear?.update();
+    }
+
+    protected attachEvents(): void {
         Page.Canvas.Observers.mouseMove.push(() => {
             const canvas = Page.Canvas.getCanvas();
             if (!canvas) {
@@ -32,24 +53,7 @@ abstract class Scene {
                 this.secondaryGears.push(this.mobileGear);
                 this.mobileGear = null;
             }
-        })
-    }
-
-    public draw(context: CanvasRenderingContext2D): void {
-        if (this.mobileGear) {
-            Gear.draw(context, this.mainGear, this.mobileGear, ...this.secondaryGears);
-        } else {
-            Gear.draw(context, this.mainGear, ...this.secondaryGears);
-        }
-    }
-
-    public update(dt: number): void {
-        this.mainGear.rotate(5 * dt * Parameters.rotationSpeed / 1000);
-
-        for (const secondaryGear of this.secondaryGears) {
-            secondaryGear.update();
-        }
-        this.mobileGear?.update();
+        });
     }
 
     protected tryBuildGear(center: Point): Gear | null {

@@ -16,17 +16,18 @@ class RandomScene extends Scene {
                 bestScene = scene;
             }
         }
-
+        
+        bestScene.attachEvents();
         return bestScene;
     }
 
     private constructor(viewportWidth: number, viewportHeight: number) {
-        super();
-
         const a = rand(0.1, 0.15);
         const b = a * rand(0.2, 0.6);
+        const mainGear = Gear.ellipsis({ x: 0, y: 0 }, a, b);
 
-        this.mainGear = Gear.ellipsis({ x: 0, y: 0 }, a, b);
+        super(mainGear);
+
         this.secondaryGears = [];
 
         for (let i = 0; i < 300; i++) {

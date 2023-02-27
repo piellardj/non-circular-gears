@@ -141,7 +141,7 @@ class Gear {
 
     public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
         const periodCount = 2;
-        const periodStepsCount = 60;
+        const periodStepsCount = 30;
         const rays: Ray[] = [];
         for (let i = 0; i < periodStepsCount; i++) {
             const percentage = i / periodStepsCount;
@@ -242,8 +242,8 @@ class Gear {
         return finalTry.distance;
     }
 
-    private readonly rays: ReadonlyArray<Ray>;
-    private readonly periodAngle: number;
+    public readonly rays: ReadonlyArray<Ray>;
+    public readonly periodAngle: number;
     private readonly periodSurface: number;
     public readonly minRadius: number;
     public readonly maxRadius: number;
@@ -252,7 +252,7 @@ class Gear {
 
     private constructor(
         public readonly center: ReadonlyPoint,
-        private readonly periodRays: ReadonlyArray<Ray>,
+        public readonly periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
         private readonly orientation: number) {
         let minRadius = 10000000000;
