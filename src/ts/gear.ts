@@ -232,7 +232,7 @@ class Gear {
     private constructor(
         private readonly center: ReadonlyPoint,
         private readonly periodRays: ReadonlyArray<Ray>,
-        private readonly periods: number) {
+        private readonly periodsCount: number) {
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
             ray.angle = normalizeAngle(ray.angle);
@@ -241,8 +241,8 @@ class Gear {
         this.maxRadius = maxRadius;
 
         const rays: Ray[] = [];
-        for (let iP = 0; iP < periods; iP++) {
-            const periodStartingAngle = TWO_PI * iP / periods;
+        for (let iP = 0; iP < periodsCount; iP++) {
+            const periodStartingAngle = TWO_PI * iP / periodsCount;
             periodRays.forEach(periodRay => {
                 rays.push({
                     angle: normalizeAngle(periodStartingAngle + periodRay.angle),
@@ -252,7 +252,7 @@ class Gear {
         }
         this.rays = rays;
 
-        this.periodAngle = TWO_PI / this.periods;
+        this.periodAngle = TWO_PI / this.periodsCount;
         this.periodSurface = 0;
         for (let i = 0; i < periodRays.length; i++) {
             const ray = this.rays[i]!;
