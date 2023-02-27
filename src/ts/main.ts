@@ -27,17 +27,22 @@ function main(): void {
     let other: Gear | null = Gear.slaveGear({ x: 0.4, y: 0 }, mainGear);
     const otherFixed = Gear.slaveGear({ x: -0.6, y: 0 }, mainGear)!;
 
+    function updateMobile(): void {
+        const mousePosition = Page.Canvas.getMousePosition();
+        other = Gear.slaveGear({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, mainGear);
+
+        const canvas = Page.Canvas.getCanvas();
+        if (canvas) {
+            canvas.style.cursor = other ? "" : "not-allowed";
+        }
+    }
+
     Page.Canvas.Observers.mouseMove.push((): void => {
         if (Page.Canvas.isMouseDown()) {
-            const mousePosition = Page.Canvas.getMousePosition();
-            other = Gear.slaveGear({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, mainGear);
-
-            const canvas = Page.Canvas.getCanvas();
-            if (canvas) {
-                canvas.style.cursor = other ? "" : "not-allowed";
-            }
+            updateMobile();
         }
     });
+    Page.Canvas.Observers.mouseUp.push(updateMobile);
 
     function mainLoop(): void {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
