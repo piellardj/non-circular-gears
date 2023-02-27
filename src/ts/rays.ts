@@ -1,8 +1,8 @@
 import { normalizeAngle, TWO_PI } from "./utils";
 
 type Ray = {
-    radius: number;
     angle: number;
+    radius: number;
 };
 
 function computeDeltaAngle(ray1: Ray, ray2: Ray): number {

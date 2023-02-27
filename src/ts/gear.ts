@@ -110,8 +110,8 @@ class Gear {
             const percentage = i / raysCount;
             const angle = TWO_PI * percentage;
             rays.push({
-                radius,
                 angle,
+                radius,
             });
         }
         return new Gear(center, rays, periodCount);
@@ -125,8 +125,8 @@ class Gear {
             const percentage = i / periodStepsCount;
             const angle = Math.PI * percentage;
             rays.push({
-                radius: a * b / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)),
                 angle,
+                radius: a * b / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)),
             });
         }
         return new Gear(center, rays, periodCount);
@@ -245,8 +245,8 @@ class Gear {
             const periodStartingAngle = TWO_PI * iP / periods;
             periodRays.forEach(periodRay => {
                 rays.push({
-                    radius: periodRay.radius,
                     angle: normalizeAngle(periodStartingAngle + periodRay.angle),
+                    radius: periodRay.radius,
                 });
             });
         }
