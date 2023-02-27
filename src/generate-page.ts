@@ -21,7 +21,20 @@ const data = {
         height: 512,
         enableFullscreen: true
     },
-    controlsSections: [],
+    controlsSections: [{
+        title: "Engine",
+        controls: [
+            {
+                type: Demopage.supportedControls.Range,
+                title: "Rotation speed",
+                id: "rotation-speed-range-id",
+                min: -1,
+                max: 1,
+                value: 0.3,
+                step: 0.05,
+            },
+        ]
+    },],
 };
 
 const SRC_DIR = path.resolve(__dirname);

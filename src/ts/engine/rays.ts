@@ -1,4 +1,4 @@
-import { normalizeAngle, TWO_PI } from "./utils";
+import { normalizeAngle, TWO_PI } from "./angle-utils";
 
 type Ray = {
     angle: number;

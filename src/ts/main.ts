@@ -1,6 +1,7 @@
 /// <reference types="./page-interface-generated" />
 
-import { Gear } from "./gear";
+import { Gear } from "./engine/gear";
+import { Parameters } from "./parameters";
 
 function getContext(): CanvasRenderingContext2D {
     const context = Page.Canvas.getCanvas()?.getContext("2d");
@@ -22,14 +23,14 @@ function getContext(): CanvasRenderingContext2D {
 
 function main(): void {
     const context = getContext();
-    const mainGear = Gear.ellipsis({ x: 0, y: 0 }, 0.2, 0.1);
+    const mainGear = Gear.ellipsis({ x: 0.2, y: 0 }, 0.2, 0.1);
     // const mainGear = Gear.circle({ x: 0, y: 0 }, 0.2);
-    let other: Gear | null = Gear.slaveGear({ x: 0.4, y: 0 }, mainGear);
-    const otherFixed = Gear.slaveGear({ x: -0.6, y: 0 }, mainGear)!;
+    const otherFixed = Gear.slaveGear({ x: -0.3, y: 0 }, mainGear)!;
+    let other: Gear | null = Gear.slaveGear({ x: 0.4, y: 0 }, otherFixed);
 
     function updateMobile(): void {
         const mousePosition = Page.Canvas.getMousePosition();
-        other = Gear.slaveGear({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, mainGear);
+        other = Gear.slaveGear({ x: 2 * mousePosition[0] - 1, y: 2 * mousePosition[1] - 1 }, otherFixed);
 
         const canvas = Page.Canvas.getCanvas();
         if (canvas) {
@@ -44,10 +45,15 @@ function main(): void {
     });
     Page.Canvas.Observers.mouseUp.push(updateMobile);
 
+    let lastUpdate = performance.now();
     function mainLoop(): void {
+        const now = performance.now();
+        const dt = now - lastUpdate;
+        lastUpdate = now;
+
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        mainGear.setRotation(performance.now() / 200);
+        mainGear.rotate(5 * dt * Parameters.rotationSpeed / 1000);
 
         const gears = [mainGear, otherFixed];
         if (other) {

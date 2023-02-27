@@ -1,6 +1,6 @@
 import { Point } from "./point";
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
-import { normalizeAngle, TWO_PI } from "./utils";
+import { normalizeAngle, TWO_PI } from "./angle-utils";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -279,11 +279,11 @@ class Gear {
         this.rays = rays;
     }
 
-    public setRotation(rotation: number): void {
+    public rotate(rotation: number): void {
         if (this.parent) {
             throw new Error("Cannot rotate child gear.");
         }
-        this.setRotationInternal(rotation);
+        this.setRotationInternal(this.rotation + rotation);
     }
 
     private setRotationInternal(rotation: number): void {
