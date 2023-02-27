@@ -1,6 +1,6 @@
 import { Point } from "./point";
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
-import { makeAnglePositive, normalizeAngle, TWO_PI } from "./utils";
+import { normalizeAngle, TWO_PI } from "./utils";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -134,7 +134,7 @@ class Gear {
                 radius,
             });
         }
-        return new Gear(center, rays, periodCount);
+        return new Gear(center, rays, periodCount, +1);
     }
 
     public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
@@ -149,7 +149,7 @@ class Gear {
                 radius: a * b / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)),
             });
         }
-        return new Gear(center, rays, periodCount);
+        return new Gear(center, rays, periodCount, +1);
     }
 
     public static slaveGear(idealCenter: ReadonlyPoint, master: Gear): Gear | null {
@@ -165,7 +165,7 @@ class Gear {
             x: master.center.x + adjustedDistance * Math.cos(angle),
             y: master.center.y + adjustedDistance * Math.sin(angle),
         };
-        const newGear = new Gear(center, period.periodRays, period.targetPeriod);
+        const newGear = new Gear(center, period.periodRays, period.targetPeriod, -master.orientation);
         newGear.parent = master;
 
         return newGear;
@@ -177,7 +177,7 @@ class Gear {
 
         for (const periodSegment of master.iterateOnPeriodSegments()) {
             periodRays.push({
-                angle: -angle,
+                angle,
                 radius: distance - periodSegment.rayFrom.radius,
             });
 
@@ -190,11 +190,16 @@ class Gear {
                 throw new Error("Should not happen");
             }
 
-            angle -= dAngle;
+            angle += dAngle;
         }
 
-        const lastAngle = -angle;
-        const period = TWO_PI / lastAngle;
+        if (master.orientation > 0) {
+            for (const periodRay of periodRays) {
+                periodRay.angle = Math.PI - periodRay.angle;
+            }
+        }
+
+        const period = TWO_PI / angle;
         const targetPeriod = Math.ceil(period);
         const error = targetPeriod - period;
         return {
@@ -245,7 +250,8 @@ class Gear {
     private constructor(
         private readonly center: ReadonlyPoint,
         private readonly periodRays: ReadonlyArray<Ray>,
-        private readonly periodsCount: number) {
+        private readonly periodsCount: number,
+        private readonly orientation: number) {
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
             ray.angle = normalizeAngle(ray.angle);
@@ -262,7 +268,7 @@ class Gear {
 
         const rays: Ray[] = [];
         for (let iP = 0; iP < periodsCount; iP++) {
-            const periodStartingAngle = iP * this.periodAngle;
+            const periodStartingAngle = this.orientation * iP * this.periodAngle;
             periodRays.forEach(periodRay => {
                 rays.push({
                     angle: normalizeAngle(periodStartingAngle + periodRay.angle),
@@ -281,7 +287,7 @@ class Gear {
     }
 
     private setRotationInternal(rotation: number): void {
-        this.rotation = makeAnglePositive(rotation);
+        this.rotation = normalizeAngle(rotation);
     }
 
     public update(): void {
@@ -291,11 +297,14 @@ class Gear {
 
         const previousMasterAngle = this.parent.rotation;
 
-        const relativeRotation = Math.atan2(this.center.y - this.parent.center.y, this.center.x - this.parent.center.x);
-        this.parent.setRotationInternal(this.parent.rotation + relativeRotation);
+        let relativeRotation = Math.atan2(this.center.y - this.parent.center.y, this.center.x - this.parent.center.x);
+        if (this.orientation > 0) {
+            relativeRotation = Math.PI + relativeRotation;
+        }
+        this.parent.setRotationInternal(this.parent.rotation - relativeRotation);
         const surfaceRotation = this.parent.getCurrentRotatedSurface();
         this.rotateFromSurface(surfaceRotation);
-        this.setRotationInternal(this.rotation - relativeRotation);
+        this.setRotationInternal(this.rotation + relativeRotation);
 
         this.parent.rotation = previousMasterAngle;
     }
@@ -368,7 +377,7 @@ class Gear {
             if (!nextRay) {
                 const firstPeriodRay = this.periodRays[0]!
                 nextRay = {
-                    angle: firstPeriodRay.angle + TWO_PI / this.periodsCount,
+                    angle: firstPeriodRay.angle + this.orientation * this.periodAngle,
                     radius: firstPeriodRay.radius,
                 };
             }
