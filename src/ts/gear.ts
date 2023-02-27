@@ -265,6 +265,10 @@ class Gear {
         if (this.parent) {
             throw new Error("Cannot rotate child gear.");
         }
+        this.setRotationInternal(rotation);
+    }
+
+    private setRotationInternal(rotation: number): void {
         this.rotation = makeAnglePositive(rotation);
     }
 
@@ -273,8 +277,15 @@ class Gear {
             return; // nothing to do
         }
 
+        const previousMasterAngle = this.parent.rotation;
+
+        const relativeRotation = Math.atan2(this.center.y - this.parent.center.y, this.center.x - this.parent.center.x);
+        this.parent.setRotationInternal(this.parent.rotation + relativeRotation);
         const surfaceRotation = this.parent.getCurrentRotatedSurface();
         this.rotateFromSurface(surfaceRotation);
+        this.setRotationInternal(this.rotation - relativeRotation);
+
+        this.parent.rotation = previousMasterAngle;
     }
 
     private getCurrentRotatedSurface(): number {
