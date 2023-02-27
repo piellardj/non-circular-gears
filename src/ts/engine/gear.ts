@@ -23,6 +23,8 @@ type Segment = {
 };
 
 class Gear {
+    public static readonly centerRadius = 0.015;
+
     public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
         const halfWidth = 0.5 * context.canvas.width;
         const halfHeight = 0.5 * context.canvas.height;
@@ -97,7 +99,7 @@ class Gear {
         // draw centers
         {
             context.fillStyle = "green";
-            const radius = factor * 0.015;
+            const radius = factor * Gear.centerRadius;
             for (const gear of gears) {
                 const center = { x: gear.center.x, y: gear.center.y };
                 normalize(center);
@@ -222,7 +224,7 @@ class Gear {
         while (tooLowTry.error > 0 && triesCount < maxTries) {
             const currentDistance = tooHighTry ? 0.5 * (tooLowTry.distance + tooHighTry.distance) : tooLowTry.distance + 0.5;
             if (currentDistance === tooLowTry.distance || currentDistance === tooHighTry?.distance) {
-                console.debug("Convergence");
+                // console.debug("Convergence");
                 break;
             }
 
@@ -236,27 +238,31 @@ class Gear {
         }
 
         const finalTry = tooLowTry;
-        console.debug(`Final error ${finalTry.error} obtained in ${triesCount} tries. Final periodicity ${finalTry.targetPeriod}, initial was ${initialTry.targetPeriod}.`);
+        // console.debug(`Final error ${finalTry.error} obtained in ${triesCount} tries. Final periodicity ${finalTry.targetPeriod}, initial was ${initialTry.targetPeriod}.`);
         return finalTry.distance;
     }
 
     private readonly rays: ReadonlyArray<Ray>;
     private readonly periodAngle: number;
     private readonly periodSurface: number;
-    private readonly maxRadius: number;
+    public readonly minRadius: number;
+    public readonly maxRadius: number;
     private parent: Gear | null = null;
     private rotation: number = 0;
 
     private constructor(
-        private readonly center: ReadonlyPoint,
+        public readonly center: ReadonlyPoint,
         private readonly periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
         private readonly orientation: number) {
+        let minRadius = 10000000000;
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
             ray.angle = normalizeAngle(ray.angle);
+            minRadius = Math.min(ray.radius, minRadius);
             maxRadius = Math.max(ray.radius, maxRadius);
         });
+        this.minRadius = minRadius;
         this.maxRadius = maxRadius;
 
         this.periodAngle = TWO_PI / this.periodsCount;
@@ -326,7 +332,7 @@ class Gear {
                 return cumulatedSurface + partial;
             }
 
-            cumulatedAngle = nextCumulatedAngle
+            cumulatedAngle = nextCumulatedAngle;
             cumulatedSurface = nextCumulatedSurface;
         }
         throw new Error();
@@ -375,7 +381,7 @@ class Gear {
             const currentRay = this.periodRays[i]!;
             let nextRay = this.periodRays[i + 1];
             if (!nextRay) {
-                const firstPeriodRay = this.periodRays[0]!
+                const firstPeriodRay = this.periodRays[0]!;
                 nextRay = {
                     angle: firstPeriodRay.angle + this.orientation * this.periodAngle,
                     radius: firstPeriodRay.radius,

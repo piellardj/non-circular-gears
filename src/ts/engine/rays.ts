@@ -14,7 +14,7 @@ function computeDeltaAngle(ray1: Ray, ray2: Ray): number {
 }
 
 function computeDistanceSquared(ray1: Ray, ray2: Ray): number {
-    let deltaAngle = computeDeltaAngle(ray1, ray2);
+    const deltaAngle = computeDeltaAngle(ray1, ray2);
     return (ray1.radius * ray1.radius) + (ray2.radius * ray2.radius) - 2 * ray1.radius * ray2.radius * Math.cos(deltaAngle);
 }
 
