@@ -37,6 +37,7 @@ class Gear {
         {
             context.fillStyle = "rgba(255,0,0,0.3)";
             context.strokeStyle = "red";
+            context.lineWidth = 2;
 
             for (const gear of gears) {
                 context.beginPath();
@@ -63,7 +64,7 @@ class Gear {
         // draw line
         {
             context.strokeStyle = "green";
-
+            context.lineWidth = 3;
             context.beginPath();
             for (const gear of gears) {
                 const center = {
@@ -71,18 +72,23 @@ class Gear {
                     y: gear.center.y,
                 };
                 normalize(center);
-                context.moveTo(center.x, center.y);
 
-                const firstRay = gear.rays[0];
-                if (!firstRay) {
-                    throw new Error("Gear has no rays.");
+
+                for (let i = 0; i < gear.periodsCount; i++) {
+                    context.moveTo(center.x, center.y);
+
+                    const firstRay = gear.rays[0];
+                    if (!firstRay) {
+                        throw new Error("Gear has no rays.");
+                    }
+                    const length = Math.min(firstRay.radius, 0.05);
+                    const point = {
+                        x: gear.center.x + length * Math.cos(firstRay.angle + i * gear.periodAngle + gear.rotation),
+                        y: gear.center.y + length * Math.sin(firstRay.angle + i * gear.periodAngle + gear.rotation),
+                    };
+                    normalize(point);
+                    context.lineTo(point.x, point.y);
                 }
-                const point = {
-                    x: gear.center.x + firstRay.radius * Math.cos(firstRay.angle + gear.rotation),
-                    y: gear.center.y + firstRay.radius * Math.sin(firstRay.angle + gear.rotation),
-                };
-                normalize(point);
-                context.lineTo(point.x, point.y);
             }
             context.closePath();
             context.stroke();
@@ -91,7 +97,7 @@ class Gear {
         // draw centers
         {
             context.fillStyle = "green";
-            const radius = factor * 0.01;
+            const radius = factor * 0.015;
             for (const gear of gears) {
                 const center = { x: gear.center.x, y: gear.center.y };
                 normalize(center);
@@ -103,16 +109,16 @@ class Gear {
         }
 
         // draw text
-        {
-            context.fillStyle = "white";
-            context.font = "16px serif";
-            for (const gear of gears) {
-                const text = (180 * gear.rotation / Math.PI).toFixed();
-                const center = { x: gear.center.x, y: gear.center.y };
-                normalize(center);
-                context.fillText(text, center.x, center.y);
-            }
-        }
+        // {
+        //     context.fillStyle = "white";
+        //     context.font = "16px serif";
+        //     for (const gear of gears) {
+        //         const text = (180 * gear.rotation / Math.PI).toFixed();
+        //         const center = { x: gear.center.x, y: gear.center.y };
+        //         normalize(center);
+        //         context.fillText(text, center.x, center.y);
+        //     }
+        // }
     }
 
     public static circle(center: ReadonlyPoint, radius: number): Gear {
