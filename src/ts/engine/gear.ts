@@ -294,7 +294,7 @@ class Gear {
         let cumulatedAngle = this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.iterateOnSegments()) {
+        for (const segment of this.iterateOnPeriodSegments()) {
             const nextCumulatedAngle = cumulatedAngle + segment.deltaAngle;
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
@@ -317,7 +317,7 @@ class Gear {
         this.rotation = -this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.iterateOnSegments()) {
+        for (const segment of this.iterateOnPeriodSegments()) {
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
             if (nextCumulatedSurface >= targetSurface) {
@@ -331,23 +331,8 @@ class Gear {
             cumulatedSurface = nextCumulatedSurface;
             this.rotation -= segment.deltaAngle;
         }
-    }
 
-    private *iterateOnSegments(): Generator<Segment> {
-        for (let iRay = 0; true; iRay++) {
-            const currentRay = this.rays[iRay % this.rays.length]!;
-            const nextRay = this.rays[(iRay + 1) % this.rays.length]!;
-
-            const deltaAngle = computeDeltaAngle(nextRay, currentRay);
-            const deltaDistance = computeDistance(nextRay, currentRay);
-
-            yield {
-                deltaAngle,
-                deltaDistance,
-                fromRadius: currentRay.radius,
-                toRadius: nextRay.radius,
-            };
-        }
+        throw new Error();
     }
 
     private *iterateOnPeriodSegments(): Generator<Segment> {
