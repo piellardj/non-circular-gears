@@ -75,7 +75,7 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
     const center = { x: centerOffset, y: 0 };
 
     const periodsCount = 1;
-    const raysCount = 90;
+    const raysCount = 60;
 
     const periodRays: Ray[] = [];
     for (let i = 0; i < raysCount; i++) {
@@ -100,7 +100,7 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
 
 function buildHeart(size: number): PolarCurve {
     const periodsCount = 1;
-    const raysCount = 90;
+    const raysCount = 60;
 
     const rotation = Math.PI / 2;
     const periodRays: Ray[] = [];
