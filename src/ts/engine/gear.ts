@@ -1,5 +1,5 @@
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
-import { normalizeAngle, TWO_PI } from "./angle-utils";
+import { normalizeAngle, toDegrees, TWO_PI } from "./angle-utils";
 import { PolarCurve } from "./polar-curves";
 
 type ReadonlyPoint = {
@@ -218,7 +218,7 @@ class Gear {
     }
 
     private updateSvgRotation(): void {
-        this.svgRotationElement.setAttribute("transform", `rotate(${180 / Math.PI * this.rotation})`);
+        this.svgRotationElement.setAttribute("transform", `rotate(${toDegrees(this.rotation)})`);
     }
 
     private getCurrentRotatedSurface(): number {

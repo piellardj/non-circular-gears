@@ -11,9 +11,14 @@ function normalizeAngle(angle: number): number {
     return angle % TWO_PI;
 }
 
+function toDegrees(angleInRadians: number): number {
+    return 180 / Math.PI * angleInRadians;
+}
+
 export {
     makeAnglePositive,
     normalizeAngle,
+    toDegrees,
     TWO_PI,
 };
 
