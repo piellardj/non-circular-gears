@@ -86,7 +86,13 @@ abstract class Scene {
     protected tryBuildGear(center: Point): Gear | null {
         const closestGear = this.findClosestGear(center);
 
-        const newGear = Gear.slaveGear(center, closestGear);
+        let newGear: Gear | null = null;
+        try {
+            newGear = Gear.slaveGear(center, closestGear);
+        } catch (e: unknown) {
+            console.debug(e);
+        }
+
         if (newGear) {
             for (const existingGear of this.allGears) {
                 if (existingGear !== closestGear) {
