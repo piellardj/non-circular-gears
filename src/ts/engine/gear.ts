@@ -1,7 +1,7 @@
 import { Point } from "./point";
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
 import { normalizeAngle, TWO_PI } from "./angle-utils";
-import { buildEllipse, PolarCurve } from "./polar-curves";
+import { PolarCurve } from "./polar-curves";
 
 type ReadonlyPoint = {
     readonly x: number;
