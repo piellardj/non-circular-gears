@@ -267,6 +267,18 @@ class Gear {
         throw new Error();
     }
 
+    private *iterateOnRays(): Generator<Ray> {
+        for (let iP = 0; iP < this.periodsCount; iP++) {
+            const periodStartingAngle = this.orientation * iP * this.periodAngle;
+            for (const periodSegment of this.periodSegments) {
+                yield {
+                    angle: normalizeAngle(periodStartingAngle + periodSegment.startingAngle),
+                    radius: periodSegment.startingRadius,
+                }
+            }
+        }
+    }
+
     private buildSvgRepresentation(): SvgRepresentation {
 
         const containerElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -278,15 +290,10 @@ class Gear {
         // body
         {
             const pathParts = ["M"];
-            for (let iP = 0; iP < this.periodsCount; iP++) {
-                const periodStartingAngle = this.orientation * iP * this.periodAngle;
-                this.periodSegments.forEach(periodSegment => {
-                    const angle = normalizeAngle(periodStartingAngle + periodSegment.startingAngle);
-                    const radius = periodSegment.startingRadius;
-                    const x = radius * Math.cos(angle);
-                    const y = radius * Math.sin(angle);
-                    pathParts.push(`${x} ${y}`);
-                });
+            for (const ray of this.iterateOnRays()) {
+                const x = ray.radius * Math.cos(ray.angle);
+                const y = ray.radius * Math.sin(ray.angle);
+                pathParts.push(`${x} ${y}`);
             }
             pathParts.push("Z");
 
