@@ -1,4 +1,5 @@
 import { Gear } from "../engine/gear";
+import { buildEllipse } from "../engine/polar-curves";
 import { distance } from "../utils";
 import { Scene } from "./scene";
 
@@ -24,7 +25,8 @@ class RandomScene extends Scene {
     private constructor(viewportWidth: number, viewportHeight: number) {
         const a = rand(0.1, 0.15);
         const b = a * rand(0.2, 0.6);
-        const mainGear = Gear.ellipsis({ x: 0, y: 0 }, a, b);
+        const curve = buildEllipse(a, b);
+        const mainGear = Gear.create({ x: 0, y: 0 }, curve);
 
         super(mainGear);
 

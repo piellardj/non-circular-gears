@@ -1,6 +1,7 @@
 import { Point } from "./point";
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
 import { normalizeAngle, TWO_PI } from "./angle-utils";
+import { buildEllipse, PolarCurve } from "./polar-curves";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -123,35 +124,8 @@ class Gear {
         // }
     }
 
-    public static circle(center: ReadonlyPoint, radius: number): Gear {
-        const periodCount = 60;
-        const raysCount = 2 * periodCount;
-
-        const rays: Ray[] = [];
-        for (let i = 0; i < 2; i++) {
-            const percentage = i / raysCount;
-            const angle = TWO_PI * percentage;
-            rays.push({
-                angle,
-                radius,
-            });
-        }
-        return new Gear(center, rays, periodCount, +1);
-    }
-
-    public static ellipsis(center: ReadonlyPoint, a: number, b: number): Gear {
-        const periodCount = 2;
-        const periodStepsCount = 30;
-        const rays: Ray[] = [];
-        for (let i = 0; i < periodStepsCount; i++) {
-            const percentage = i / periodStepsCount;
-            const angle = Math.PI * percentage;
-            rays.push({
-                angle,
-                radius: a * b / Math.sqrt(Math.pow(b * Math.cos(angle), 2) + Math.pow(a * Math.sin(angle), 2)),
-            });
-        }
-        return new Gear(center, rays, periodCount, +1);
+    public static create(center: ReadonlyPoint, polarCurve: PolarCurve): Gear {
+        return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1);
     }
 
     public static slaveGear(idealCenter: ReadonlyPoint, master: Gear): Gear | null {
