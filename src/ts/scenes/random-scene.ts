@@ -1,6 +1,7 @@
 import { Gear } from "../engine/gear";
 import { buildEllipse, buildHeart, buildOffCircle, PolarCurve } from "../engine/polar-curves";
 import { EGearShape } from "../parameters";
+import { SvgCanvas } from "../svg-canvas";
 import { distance } from "../utils";
 import { Scene } from "./scene";
 
@@ -9,11 +10,11 @@ function rand(min: number, max: number): number {
 }
 
 class RandomScene extends Scene {
-    public static create(viewportWidth: number, viewportHeight: number, centralGear: EGearShape): RandomScene {
-        let bestScene = new RandomScene(viewportWidth, viewportHeight, centralGear);
+    public static create(svgCanvas: SvgCanvas, centralGear: EGearShape): RandomScene {
+        let bestScene = new RandomScene(svgCanvas, centralGear);
 
         for (let i = 0; i < 5; i++) {
-            const scene = new RandomScene(viewportWidth, viewportHeight, centralGear);
+            const scene = new RandomScene(svgCanvas, centralGear);
             if (scene.secondaryGears.length > bestScene.secondaryGears.length) {
                 bestScene = scene;
             }
@@ -22,7 +23,7 @@ class RandomScene extends Scene {
         return bestScene;
     }
 
-    private constructor(viewportWidth: number, viewportHeight: number, centralGear: EGearShape) {
+    private constructor(svgCanvas: SvgCanvas, centralGear: EGearShape) {
         const size = 0.1;
 
         let polarCurve: PolarCurve;
@@ -42,10 +43,12 @@ class RandomScene extends Scene {
 
         const mainGear = Gear.create({ x: 0, y: 0 }, polarCurve);
 
-        super(mainGear);
+        super(svgCanvas, mainGear);
 
         this.secondaryGears = [];
 
+        const viewportWidth = svgCanvas.width;
+        const viewportHeight = svgCanvas.height;
         for (let i = 0; i < 300; i++) {
             const center = {
                 x: rand(-0.5 * viewportWidth, 0.5 * viewportWidth),

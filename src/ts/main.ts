@@ -2,39 +2,20 @@
 
 import { Parameters } from "./parameters";
 import { RandomScene } from "./scenes/random-scene";
+import { SvgCanvas } from "./svg-canvas";
 
-function getContext(): CanvasRenderingContext2D {
-    const context = Page.Canvas.getCanvas()?.getContext("2d");
-    if (!context) {
-        throw new Error("Failed to get context.");
-    }
-
-    const updateCanvasSize = (): void => {
-        const size = Page.Canvas.getSize();
-        context.canvas.width = size[0];
-        context.canvas.height = size[1];
-    };
-
-    Page.Canvas.Observers.canvasResize.push(updateCanvasSize);
-    updateCanvasSize();
-
-    return context;
-}
 
 function main(): void {
-    const context = getContext();
+    const svgCanvas = new SvgCanvas();
 
-    const aspectRatio = Page.Canvas.getAspectRatio();
-    const width = 2 * Math.max(1, aspectRatio);
-    const height = 2 * Math.max(1, 1 / aspectRatio);
-
-    let scene = RandomScene.create(width, height, Parameters.gearShape);
-    scene.attachEvents();
+    let scene = RandomScene.create(svgCanvas, Parameters.gearShape);
+    scene.attach();
 
     function resetScene(): void {
-        scene.detachEvents();
-        scene = RandomScene.create(width, height, Parameters.gearShape);
-        scene.attachEvents();
+        scene.detach();
+        svgCanvas.clear();
+        scene = RandomScene.create(svgCanvas, Parameters.gearShape);
+        scene.attach();
     }
     Parameters.onGearShapeChange.push(resetScene);
     Parameters.onReset.push(resetScene);
@@ -45,10 +26,7 @@ function main(): void {
         const dt = now - lastUpdate;
         lastUpdate = now;
 
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
         scene.update(dt);
-        scene.draw(context);
         requestAnimationFrame(mainLoop);
     }
 

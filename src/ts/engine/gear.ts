@@ -1,4 +1,3 @@
-import { Point } from "./point";
 import { computeDeltaAngle, computeDistance, Ray } from "./rays";
 import { normalizeAngle, TWO_PI } from "./angle-utils";
 import { PolarCurve } from "./polar-curves";
@@ -23,106 +22,13 @@ type Segment = {
     toRadius: number;
 };
 
+type SvgRepresentation = {
+    container: SVGElement;
+    rotationElement: SVGElement;
+};
+
 class Gear {
     public static readonly centerRadius = 0.015;
-
-    public static draw(context: CanvasRenderingContext2D, ...gears: Gear[]): void {
-        const halfWidth = 0.5 * context.canvas.width;
-        const halfHeight = 0.5 * context.canvas.height;
-        const factor = Math.min(halfWidth, halfHeight);
-
-        function normalize(point: Point): void {
-            point.x = halfWidth + factor * point.x;
-            point.y = halfHeight + factor * point.y;
-        }
-
-        // draw body
-        {
-            context.fillStyle = "rgba(255,0,0,0.3)";
-            context.strokeStyle = "red";
-            context.lineWidth = 2;
-
-            for (const gear of gears) {
-                context.beginPath();
-                gear.rays.forEach((ray: Ray, index: number) => {
-                    const point = {
-                        x: gear.center.x + ray.radius * Math.cos(ray.angle + gear.rotation),
-                        y: gear.center.y + ray.radius * Math.sin(ray.angle + gear.rotation),
-                    };
-                    normalize(point);
-
-                    if (index === 0) {
-                        context.moveTo(point.x, point.y);
-                    } else {
-                        context.lineTo(point.x, point.y);
-                    }
-                });
-
-                context.closePath();
-                context.stroke();
-                context.fill();
-            }
-        }
-
-        // draw line
-        {
-            context.strokeStyle = "green";
-            context.lineWidth = 3;
-            context.beginPath();
-            for (const gear of gears) {
-                const center = {
-                    x: gear.center.x,
-                    y: gear.center.y,
-                };
-                normalize(center);
-
-
-                for (let i = 0; i < gear.periodsCount; i++) {
-                    context.moveTo(center.x, center.y);
-
-                    const firstRay = gear.rays[0];
-                    if (!firstRay) {
-                        throw new Error("Gear has no rays.");
-                    }
-                    const length = Math.min(firstRay.radius, 0.05);
-                    const point = {
-                        x: gear.center.x + length * Math.cos(firstRay.angle + i * gear.periodAngle + gear.rotation),
-                        y: gear.center.y + length * Math.sin(firstRay.angle + i * gear.periodAngle + gear.rotation),
-                    };
-                    normalize(point);
-                    context.lineTo(point.x, point.y);
-                }
-            }
-            context.closePath();
-            context.stroke();
-        }
-
-        // draw centers
-        {
-            context.fillStyle = "green";
-            const radius = factor * Gear.centerRadius;
-            for (const gear of gears) {
-                const center = { x: gear.center.x, y: gear.center.y };
-                normalize(center);
-                context.beginPath();
-                context.arc(center.x, center.y, radius, 0, TWO_PI);
-                context.closePath();
-                context.fill();
-            }
-        }
-
-        // draw text
-        // {
-        //     context.fillStyle = "white";
-        //     context.font = "16px serif";
-        //     for (const gear of gears) {
-        //         const text = (180 * gear.rotation / Math.PI).toFixed();
-        //         const center = { x: gear.center.x, y: gear.center.y };
-        //         normalize(center);
-        //         context.fillText(text, center.x, center.y);
-        //     }
-        // }
-    }
 
     public static create(center: ReadonlyPoint, polarCurve: PolarCurve): Gear {
         return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1);
@@ -216,8 +122,9 @@ class Gear {
         return finalTry.distance;
     }
 
-    public readonly rays: ReadonlyArray<Ray>;
-    public readonly periodAngle: number;
+    public readonly svgElement: SVGElement;
+    private readonly svgRotationElement: SVGElement;
+    private readonly periodAngle: number;
     private readonly periodSurface: number;
     public readonly minRadius: number;
     public readonly maxRadius: number;
@@ -246,17 +153,9 @@ class Gear {
             this.periodSurface += segment.deltaDistance;
         }
 
-        const rays: Ray[] = [];
-        for (let iP = 0; iP < periodsCount; iP++) {
-            const periodStartingAngle = this.orientation * iP * this.periodAngle;
-            periodRays.forEach(periodRay => {
-                rays.push({
-                    angle: normalizeAngle(periodStartingAngle + periodRay.angle),
-                    radius: periodRay.radius,
-                });
-            });
-        }
-        this.rays = rays;
+        const svgRepresentation = this.buildSvgRepresentation();
+        this.svgElement = svgRepresentation.container;
+        this.svgRotationElement = svgRepresentation.rotationElement;
     }
 
     public rotate(rotation: number): void {
@@ -264,6 +163,7 @@ class Gear {
             throw new Error("Cannot rotate child gear.");
         }
         this.setRotationInternal(this.rotation + rotation);
+        this.updateSvgRotation();
     }
 
     private setRotationInternal(rotation: number): void {
@@ -276,17 +176,23 @@ class Gear {
         }
 
         const previousMasterAngle = this.parent.rotation;
-
-        let relativeRotation = Math.atan2(this.center.y - this.parent.center.y, this.center.x - this.parent.center.x);
-        if (this.orientation > 0) {
-            relativeRotation = Math.PI + relativeRotation;
+        {
+            let relativeRotation = Math.atan2(this.center.y - this.parent.center.y, this.center.x - this.parent.center.x);
+            if (this.orientation > 0) {
+                relativeRotation = Math.PI + relativeRotation;
+            }
+            this.parent.setRotationInternal(this.parent.rotation - relativeRotation);
+            const surfaceRotation = this.parent.getCurrentRotatedSurface();
+            this.rotateFromSurface(surfaceRotation);
+            this.setRotationInternal(this.rotation + relativeRotation);
         }
-        this.parent.setRotationInternal(this.parent.rotation - relativeRotation);
-        const surfaceRotation = this.parent.getCurrentRotatedSurface();
-        this.rotateFromSurface(surfaceRotation);
-        this.setRotationInternal(this.rotation + relativeRotation);
-
         this.parent.rotation = previousMasterAngle;
+
+        this.updateSvgRotation();
+    }
+
+    private updateSvgRotation(): void {
+        this.svgRotationElement.setAttribute("transform", `rotate(${180 / Math.PI * this.rotation})`);
     }
 
     private getCurrentRotatedSurface(): number {
@@ -357,6 +263,76 @@ class Gear {
                 toRadius: nextRay.radius,
             };
         }
+    }
+
+    private buildSvgRepresentation(): SvgRepresentation {
+
+        const containerElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        containerElement.setAttribute("transform", `translate(${this.center.x},${this.center.y})`);
+
+        const rotationElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        containerElement.appendChild(rotationElement);
+
+        // body
+        {
+            const pathParts = ["M"];
+            for (let iP = 0; iP < this.periodsCount; iP++) {
+                const periodStartingAngle = this.orientation * iP * this.periodAngle;
+                this.periodRays.forEach(periodRay => {
+                    const angle = normalizeAngle(periodStartingAngle + periodRay.angle);
+                    const radius = periodRay.radius;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    pathParts.push(`${x} ${y}`);
+                });
+            }
+            pathParts.push("Z");
+            const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            gearElement.setAttribute("d", pathParts.join(" "));
+            gearElement.setAttribute("fill", "rgba(255,0,0,0.3)");
+            gearElement.setAttribute("stroke", "red");
+            gearElement.setAttribute("stroke-width", "0.006");
+            rotationElement.appendChild(gearElement);
+        }
+
+        // rays
+        {
+            const firstRay = this.periodRays[0];
+            if (!firstRay) {
+                throw new Error("Gear has no rays.");
+            }
+            const length = Math.min(firstRay.radius, 0.05);
+
+            const pathParts: string[] = [];
+            for (let i = 0; i < this.periodsCount; i++) {
+                pathParts.push("M0 0");
+
+                const angle = firstRay.angle + i * this.periodAngle;
+                const x = length * Math.cos(angle);
+                const y = length * Math.sin(angle);
+                pathParts.push(`L${x} ${y}`);
+            }
+            const raysElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            raysElement.setAttribute("d", pathParts.join(""));
+            raysElement.setAttribute("stroke", "green");
+            raysElement.setAttribute("stroke-width", "0.006");
+            rotationElement.appendChild(raysElement);
+        }
+
+        // center
+        {
+            const centerElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            centerElement.setAttribute("cx", "0");
+            centerElement.setAttribute("cy", "0");
+            centerElement.setAttribute("r", Gear.centerRadius.toString());
+            centerElement.setAttribute("fill", "green");
+            containerElement.appendChild(centerElement);
+        }
+
+        return {
+            container: containerElement,
+            rotationElement,
+        };
     }
 }
 

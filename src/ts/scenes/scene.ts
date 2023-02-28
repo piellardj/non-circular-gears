@@ -1,6 +1,7 @@
 import { Gear } from "../engine/gear";
 import { Point } from "../engine/point";
 import { Parameters } from "../parameters";
+import { SvgCanvas } from "../svg-canvas";
 import { distance, distanceSquared } from "../utils";
 
 function removeFromArray<T>(array: T[], element: T): void {
@@ -17,20 +18,18 @@ abstract class Scene {
     protected readonly mainGear: Gear;
     protected secondaryGears: Gear[] = [];
 
-    private mobileGear: Gear | null = null;
+    private readonly svgCanvas: SvgCanvas;
 
     private readonly onMouseMove: VoidFunction;
     private readonly onMouseUp: VoidFunction;
 
-    protected constructor(mainGear: Gear) {
+    private mobileGear: Gear | null = null;
+
+    protected constructor(svgCanvas: SvgCanvas, mainGear: Gear) {
+        this.svgCanvas = svgCanvas;
         this.mainGear = mainGear;
 
         this.onMouseMove = () => {
-            const canvas = Page.Canvas.getCanvas();
-            if (!canvas) {
-                throw new Error();
-            }
-
             const aspectRatio = Page.Canvas.getAspectRatio();
             const mousePosition = Page.Canvas.getMousePosition();
             const center = {
@@ -38,8 +37,17 @@ abstract class Scene {
                 y: (2 * mousePosition[1] - 1) * Math.max(1, 1 / aspectRatio),
             };
 
+            if (this.mobileGear) {
+                this.svgCanvas.removeChild(this.mobileGear.svgElement);
+            }
             this.mobileGear = this.tryBuildGear(center);
-            canvas.style.cursor = this.mobileGear ? "default" : "not-allowed";
+
+            if (this.mobileGear) {
+                this.svgCanvas.cursor = "";
+                this.svgCanvas.addChild(this.mobileGear.svgElement);
+            } else {
+                this.svgCanvas.cursor = "not-allowed";
+            }
         };
 
         this.onMouseUp = () => {
@@ -48,14 +56,6 @@ abstract class Scene {
                 this.mobileGear = null;
             }
         };
-    }
-
-    public draw(context: CanvasRenderingContext2D): void {
-        if (this.mobileGear) {
-            Gear.draw(context, this.mainGear, this.mobileGear, ...this.secondaryGears);
-        } else {
-            Gear.draw(context, this.mainGear, ...this.secondaryGears);
-        }
     }
 
     public update(dt: number): void {
@@ -67,18 +67,21 @@ abstract class Scene {
         this.mobileGear?.update();
     }
 
-    public attachEvents(): void {
-        this.detachEvents();
+    public attach(): void {
+        this.detach();
 
         Page.Canvas.Observers.mouseMove.push(this.onMouseMove);
         Page.Canvas.Observers.mouseUp.push(this.onMouseUp);
+
+        for (const gear of [this.mainGear, ...this.secondaryGears]) {
+            this.svgCanvas.addChild(gear.svgElement);
+        }
     }
 
-    public detachEvents(): void {
+    public detach(): void {
         removeFromArray(Page.Canvas.Observers.mouseMove, this.onMouseMove);
         removeFromArray(Page.Canvas.Observers.mouseUp, this.onMouseUp);
     }
-
 
     protected tryBuildGear(center: Point): Gear | null {
         const closestGear = this.findClosestGear(center);
@@ -94,7 +97,6 @@ abstract class Scene {
                 }
             }
         }
-
         return newGear;
     }
 
