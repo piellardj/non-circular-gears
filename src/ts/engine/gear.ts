@@ -308,13 +308,13 @@ class Gear {
         }
 
         const centerColor = "green";
+        const firstPeriodSegment = this.periodSegments[0];
+        if (!firstPeriodSegment) {
+            throw new Error("Gear has no rays.");
+        }
 
         // rays
         {
-            const firstPeriodSegment = this.periodSegments[0];
-            if (!firstPeriodSegment) {
-                throw new Error("Gear has no rays.");
-            }
             const length = Math.min(firstPeriodSegment.startingRadius, 0.05);
 
             const pathParts: string[] = [];
@@ -335,12 +335,28 @@ class Gear {
 
         // center
         {
-            const centerElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            centerElement.setAttribute("cx", "0");
-            centerElement.setAttribute("cy", "0");
-            centerElement.setAttribute("r", Gear.centerRadius.toString());
+            let centerElement: SVGElement;
+            if (this.periodsCount < 3) {
+                centerElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                centerElement.setAttribute("cx", "0");
+                centerElement.setAttribute("cy", "0");
+                centerElement.setAttribute("r", Gear.centerRadius.toString());
+            } else {
+                const radius = Gear.centerRadius * (1 + 0.1 * Math.max(0, 5 - this.periodsCount + 3));
+                const pathParts: string[] = [];
+                for (let i = 0; i < this.periodsCount; i++) {
+                    const command = (i === 0) ? "M" : "L";
+                    const angle = firstPeriodSegment.startingAngle + i * this.periodAngle;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    pathParts.push(`${command}${x} ${y}`);
+                }
+                pathParts.push("Z");
+                centerElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                centerElement.setAttribute("d", pathParts.join(""));
+            }
             centerElement.setAttribute("fill", centerColor);
-            containerElement.appendChild(centerElement);
+            rotationElement.appendChild(centerElement);
         }
 
         return {
