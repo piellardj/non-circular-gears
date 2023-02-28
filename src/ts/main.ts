@@ -31,11 +31,13 @@ function main(): void {
     let scene = RandomScene.create(width, height, Parameters.gearShape);
     scene.attachEvents();
 
-    Parameters.onGearShapeChange.push(() => {
+    function resetScene(): void {
         scene.detachEvents();
         scene = RandomScene.create(width, height, Parameters.gearShape);
         scene.attachEvents();
-    });
+    }
+    Parameters.onGearShapeChange.push(resetScene);
+    Parameters.onReset.push(resetScene);
 
     let lastUpdate = performance.now();
     function mainLoop(): void {

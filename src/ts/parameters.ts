@@ -3,6 +3,7 @@
 const controlId = {
     ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     CENTRAL_GEAR_TABS_ID: "central-gear-tabs-id",
+    RESET_BUTTON_ID: "reset-button",
 };
 
 enum EGearShape {
@@ -11,10 +12,18 @@ enum EGearShape {
     HEART = "heart",
 }
 
-Page.Tabs.addObserver(controlId.CENTRAL_GEAR_TABS_ID, () => {
-    for (const callback of Parameters.onGearShapeChange) {
+function callCallbacks(callbacks: VoidFunction[]): void {
+    for (const callback of callbacks) {
         callback();
     }
+}
+
+Page.Tabs.addObserver(controlId.CENTRAL_GEAR_TABS_ID, () => {
+    callCallbacks(Parameters.onGearShapeChange);
+});
+
+Page.Button.addObserver(controlId.RESET_BUTTON_ID, () => {
+    callCallbacks(Parameters.onReset);
 });
 
 abstract class Parameters {
@@ -27,6 +36,8 @@ abstract class Parameters {
     }
 
     public static onGearShapeChange: VoidFunction[] = [];
+
+    public static onReset: VoidFunction[] = [];
 }
 
 export {

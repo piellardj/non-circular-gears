@@ -55,6 +55,11 @@ const data = {
                         },
                     ]
                 },
+                {
+                    type: Demopage.supportedControls.Button,
+                    id: "reset-button",
+                    label: "Reset",
+                },
             ]
         },
     ],
