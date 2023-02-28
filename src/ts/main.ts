@@ -1,5 +1,6 @@
 /// <reference types="./page-interface-generated" />
 
+import { Parameters } from "./parameters";
 import { RandomScene } from "./scenes/random-scene";
 
 function getContext(): CanvasRenderingContext2D {
@@ -27,7 +28,14 @@ function main(): void {
     const width = 2 * Math.max(1, aspectRatio);
     const height = 2 * Math.max(1, 1 / aspectRatio);
 
-    const scene = RandomScene.create(width, height);
+    let scene = RandomScene.create(width, height, Parameters.gearShape);
+    scene.attachEvents();
+
+    Parameters.onGearShapeChange.push(() => {
+        scene.detachEvents();
+        scene = RandomScene.create(width, height, Parameters.gearShape);
+        scene.attachEvents();
+    });
 
     let lastUpdate = performance.now();
     function mainLoop(): void {

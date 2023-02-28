@@ -34,6 +34,27 @@ const data = {
                     value: 0.3,
                     step: 0.05,
                 },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Central gear",
+                    id: "central-gear-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            label: "Ellipse",
+                            value: "ellipse",
+                            checked: true,
+                        },
+                        {
+                            label: "Off-circle",
+                            value: "off-circle",
+                        },
+                        {
+                            label: "Heart",
+                            value: "heart",
+                        },
+                    ]
+                },
             ]
         },
     ],

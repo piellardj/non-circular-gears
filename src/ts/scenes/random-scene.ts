@@ -1,5 +1,6 @@
 import { Gear } from "../engine/gear";
-import { buildEllipse } from "../engine/polar-curves";
+import { buildEllipse, buildHeart, buildOffCircle, PolarCurve } from "../engine/polar-curves";
+import { EGearShape } from "../parameters";
 import { distance } from "../utils";
 import { Scene } from "./scene";
 
@@ -8,25 +9,38 @@ function rand(min: number, max: number): number {
 }
 
 class RandomScene extends Scene {
-    public static create(viewportWidth: number, viewportHeight: number): RandomScene {
-        let bestScene = new RandomScene(viewportWidth, viewportHeight);
+    public static create(viewportWidth: number, viewportHeight: number, centralGear: EGearShape): RandomScene {
+        let bestScene = new RandomScene(viewportWidth, viewportHeight, centralGear);
 
         for (let i = 0; i < 5; i++) {
-            const scene = new RandomScene(viewportWidth, viewportHeight);
+            const scene = new RandomScene(viewportWidth, viewportHeight, centralGear);
             if (scene.secondaryGears.length > bestScene.secondaryGears.length) {
                 bestScene = scene;
             }
         }
-        
-        bestScene.attachEvents();
+
         return bestScene;
     }
 
-    private constructor(viewportWidth: number, viewportHeight: number) {
-        const a = rand(0.1, 0.15);
-        const b = a * rand(0.2, 0.6);
-        const curve = buildEllipse(a, b);
-        const mainGear = Gear.create({ x: 0, y: 0 }, curve);
+    private constructor(viewportWidth: number, viewportHeight: number, centralGear: EGearShape) {
+        const size = 0.1;
+
+        let polarCurve: PolarCurve;
+        switch (centralGear) {
+            case EGearShape.ELLIPSE:
+                polarCurve = buildEllipse(size, rand(0.2, 0.6) * size);
+                break;
+            case EGearShape.HEART:
+                polarCurve = buildHeart(0.17 * size);
+                break;
+            case EGearShape.OFF_CIRCLE:
+                polarCurve = buildOffCircle(size, rand(0.3, 0.9) * size);
+                break;
+            default:
+                throw new Error(centralGear);
+        }
+
+        const mainGear = Gear.create({ x: 0, y: 0 }, polarCurve);
 
         super(mainGear);
 

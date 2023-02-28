@@ -3,14 +3,51 @@ import { Point } from "../engine/point";
 import { Parameters } from "../parameters";
 import { distance, distanceSquared } from "../utils";
 
+function removeFromArray<T>(array: T[], element: T): void {
+    while (array.length > 0) {
+        const index = array.indexOf(element);
+        if (index < 0) {
+            return;
+        }
+        array.splice(index, 1);
+    }
+}
+
 abstract class Scene {
     protected readonly mainGear: Gear;
     protected secondaryGears: Gear[] = [];
 
     private mobileGear: Gear | null = null;
 
+    private readonly onMouseMove: VoidFunction;
+    private readonly onMouseUp: VoidFunction;
+
     protected constructor(mainGear: Gear) {
         this.mainGear = mainGear;
+
+        this.onMouseMove = () => {
+            const canvas = Page.Canvas.getCanvas();
+            if (!canvas) {
+                throw new Error();
+            }
+
+            const aspectRatio = Page.Canvas.getAspectRatio();
+            const mousePosition = Page.Canvas.getMousePosition();
+            const center = {
+                x: (2 * mousePosition[0] - 1) * Math.max(1, aspectRatio),
+                y: (2 * mousePosition[1] - 1) * Math.max(1, 1 / aspectRatio),
+            };
+
+            this.mobileGear = this.tryBuildGear(center);
+            canvas.style.cursor = this.mobileGear ? "default" : "not-allowed";
+        };
+
+        this.onMouseUp = () => {
+            if (this.mobileGear) {
+                this.secondaryGears.push(this.mobileGear);
+                this.mobileGear = null;
+            }
+        };
     }
 
     public draw(context: CanvasRenderingContext2D): void {
@@ -30,31 +67,18 @@ abstract class Scene {
         this.mobileGear?.update();
     }
 
-    protected attachEvents(): void {
-        Page.Canvas.Observers.mouseMove.push(() => {
-            const canvas = Page.Canvas.getCanvas();
-            if (!canvas) {
-                throw new Error();
-            }
+    public attachEvents(): void {
+        this.detachEvents();
 
-            const aspectRatio = Page.Canvas.getAspectRatio();
-            const mousePosition = Page.Canvas.getMousePosition();
-            const center = {
-                x: (2 * mousePosition[0] - 1) * Math.max(1, aspectRatio),
-                y: (2 * mousePosition[1] - 1) * Math.max(1, 1 / aspectRatio),
-            };
-
-            this.mobileGear = this.tryBuildGear(center);
-            canvas.style.cursor = this.mobileGear ? "default" : "not-allowed";
-        });
-
-        Page.Canvas.Observers.mouseUp.push(() => {
-            if (this.mobileGear) {
-                this.secondaryGears.push(this.mobileGear);
-                this.mobileGear = null;
-            }
-        });
+        Page.Canvas.Observers.mouseMove.push(this.onMouseMove);
+        Page.Canvas.Observers.mouseUp.push(this.onMouseUp);
     }
+
+    public detachEvents(): void {
+        removeFromArray(Page.Canvas.Observers.mouseMove, this.onMouseMove);
+        removeFromArray(Page.Canvas.Observers.mouseUp, this.onMouseUp);
+    }
+
 
     protected tryBuildGear(center: Point): Gear | null {
         const closestGear = this.findClosestGear(center);
