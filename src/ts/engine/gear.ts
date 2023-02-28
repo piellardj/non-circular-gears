@@ -19,8 +19,8 @@ type ConstructionResult = {
 type Segment = {
     deltaAngle: number;
     deltaDistance: number;
-    rayFrom: Ray;
-    rayTo: Ray;
+    fromRadius: number;
+    toRadius: number;
 };
 
 class Gear {
@@ -154,13 +154,13 @@ class Gear {
         for (const periodSegment of master.iterateOnPeriodSegments()) {
             periodRays.push({
                 angle,
-                radius: distance - periodSegment.rayFrom.radius,
+                radius: distance - periodSegment.fromRadius,
             });
 
             const dSegmentLengthSquared = periodSegment.deltaDistance * periodSegment.deltaDistance;
 
-            const r1 = distance - periodSegment.rayFrom.radius;
-            const r2 = distance - periodSegment.rayTo.radius;
+            const r1 = distance - periodSegment.fromRadius;
+            const r2 = distance - periodSegment.toRadius;
             const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
             if (isNaN(dAngle)) {
                 throw new Error("Should not happen");
@@ -344,8 +344,8 @@ class Gear {
             yield {
                 deltaAngle,
                 deltaDistance,
-                rayFrom: currentRay,
-                rayTo: nextRay,
+                fromRadius: currentRay.radius,
+                toRadius: nextRay.radius,
             };
         }
     }
@@ -368,8 +368,8 @@ class Gear {
             yield {
                 deltaAngle,
                 deltaDistance,
-                rayFrom: currentRay,
-                rayTo: nextRay,
+                fromRadius: currentRay.radius,
+                toRadius: nextRay.radius,
             };
         }
     }
