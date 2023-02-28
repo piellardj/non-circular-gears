@@ -226,7 +226,7 @@ class Gear {
 
     private constructor(
         public readonly center: ReadonlyPoint,
-        public readonly periodRays: ReadonlyArray<Ray>,
+        private readonly periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
         private readonly orientation: number) {
         let minRadius = 10000000000;
