@@ -48,8 +48,7 @@ class Gear {
             x: master.center.x + adjustedDistance * Math.cos(angle),
             y: master.center.y + adjustedDistance * Math.sin(angle),
         };
-        const newGear = new Gear(center, period.periodRays, period.targetPeriod, -master.orientation);
-        newGear.parent = master;
+        const newGear = new Gear(center, period.periodRays, period.targetPeriod, -master.orientation, master);
 
         return newGear;
     }
@@ -130,14 +129,14 @@ class Gear {
     private readonly periodSurface: number;
     public readonly minRadius: number;
     public readonly maxRadius: number;
-    private parent: Gear | null = null;
     private rotation: number = 0;
 
     private constructor(
         public readonly center: ReadonlyPoint,
         periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
-        private readonly orientation: number) {
+        private readonly orientation: number,
+        private readonly parent?: Gear) {
         let minRadius = 10000000000;
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
@@ -290,13 +289,18 @@ class Gear {
                 });
             }
             pathParts.push("Z");
+
+            const color = this.parent ? "red" : "#FF6A00";
             const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
             gearElement.setAttribute("d", pathParts.join(" "));
-            gearElement.setAttribute("fill", "rgba(255,0,0,0.3)");
-            gearElement.setAttribute("stroke", "red");
+            gearElement.setAttribute("fill", color);
+            gearElement.setAttribute("fill-opacity", "0.3");
+            gearElement.setAttribute("stroke", color);
             gearElement.setAttribute("stroke-width", "0.006");
             rotationElement.appendChild(gearElement);
         }
+
+        const centerColor = "green";
 
         // rays
         {
@@ -317,7 +321,7 @@ class Gear {
             }
             const raysElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
             raysElement.setAttribute("d", pathParts.join(""));
-            raysElement.setAttribute("stroke", "green");
+            raysElement.setAttribute("stroke", centerColor);
             raysElement.setAttribute("stroke-width", "0.006");
             rotationElement.appendChild(raysElement);
         }
@@ -328,7 +332,7 @@ class Gear {
             centerElement.setAttribute("cx", "0");
             centerElement.setAttribute("cy", "0");
             centerElement.setAttribute("r", Gear.centerRadius.toString());
-            centerElement.setAttribute("fill", "green");
+            centerElement.setAttribute("fill", centerColor);
             containerElement.appendChild(centerElement);
         }
 
