@@ -16,10 +16,11 @@ type ConstructionResult = {
 };
 
 type Segment = {
-    deltaAngle: number;
-    deltaDistance: number;
-    fromRadius: number;
-    toRadius: number;
+    startingAngle: number;
+    startingRadius: number;
+    nextRadius: number;
+    deltaAngle: number; // until next ray
+    deltaDistance: number; // until next ray
 };
 
 type SvgRepresentation = {
@@ -57,16 +58,16 @@ class Gear {
         const periodRays: Ray[] = [];
         let angle = 0;
 
-        for (const periodSegment of master.iterateOnPeriodSegments()) {
+        for (const periodSegment of master.periodSegments) {
             periodRays.push({
                 angle,
-                radius: distance - periodSegment.fromRadius,
+                radius: distance - periodSegment.startingRadius,
             });
 
             const dSegmentLengthSquared = periodSegment.deltaDistance * periodSegment.deltaDistance;
 
-            const r1 = distance - periodSegment.fromRadius;
-            const r2 = distance - periodSegment.toRadius;
+            const r1 = distance - periodSegment.startingRadius;
+            const r2 = distance - periodSegment.nextRadius;
             const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
             if (isNaN(dAngle)) {
                 throw new Error("Should not happen");
@@ -124,6 +125,7 @@ class Gear {
 
     public readonly svgElement: SVGElement;
     private readonly svgRotationElement: SVGElement;
+    private readonly periodSegments: Segment[];
     private readonly periodAngle: number;
     private readonly periodSurface: number;
     public readonly minRadius: number;
@@ -133,7 +135,7 @@ class Gear {
 
     private constructor(
         public readonly center: ReadonlyPoint,
-        private readonly periodRays: ReadonlyArray<Ray>,
+        periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
         private readonly orientation: number) {
         let minRadius = 10000000000;
@@ -148,8 +150,33 @@ class Gear {
 
         this.periodAngle = TWO_PI / this.periodsCount;
 
+        const firstPeriodRay = periodRays[0];
+        if (!firstPeriodRay) {
+            throw new Error();
+        }
+        this.periodSegments = periodRays.map((currentRay: Ray, index: number) => {
+            let nextRay = periodRays[index + 1];
+            if (!nextRay) {
+                nextRay = {
+                    angle: firstPeriodRay.angle + this.orientation * this.periodAngle,
+                    radius: firstPeriodRay.radius,
+                };
+            }
+
+            const deltaAngle = computeDeltaAngle(nextRay, currentRay);
+            const deltaDistance = computeDistance(nextRay, currentRay);
+
+            return {
+                startingAngle: currentRay.angle,
+                startingRadius: currentRay.radius,
+                nextRadius: nextRay.radius,
+                deltaAngle,
+                deltaDistance,
+            };
+        });
+
         this.periodSurface = 0;
-        for (const segment of this.iterateOnPeriodSegments()) {
+        for (const segment of this.periodSegments) {
             this.periodSurface += segment.deltaDistance;
         }
 
@@ -200,7 +227,7 @@ class Gear {
         let cumulatedAngle = this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.iterateOnPeriodSegments()) {
+        for (const segment of this.periodSegments) {
             const nextCumulatedAngle = cumulatedAngle + segment.deltaAngle;
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
@@ -223,7 +250,7 @@ class Gear {
         this.rotation = -this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.iterateOnPeriodSegments()) {
+        for (const segment of this.periodSegments) {
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
             if (nextCumulatedSurface >= targetSurface) {
@@ -241,30 +268,6 @@ class Gear {
         throw new Error();
     }
 
-    private *iterateOnPeriodSegments(): Generator<Segment> {
-        for (let i = 0; i < this.periodRays.length; i++) {
-            const currentRay = this.periodRays[i]!;
-            let nextRay = this.periodRays[i + 1];
-            if (!nextRay) {
-                const firstPeriodRay = this.periodRays[0]!;
-                nextRay = {
-                    angle: firstPeriodRay.angle + this.orientation * this.periodAngle,
-                    radius: firstPeriodRay.radius,
-                };
-            }
-
-            const deltaAngle = computeDeltaAngle(nextRay, currentRay);
-            const deltaDistance = computeDistance(nextRay, currentRay);
-
-            yield {
-                deltaAngle,
-                deltaDistance,
-                fromRadius: currentRay.radius,
-                toRadius: nextRay.radius,
-            };
-        }
-    }
-
     private buildSvgRepresentation(): SvgRepresentation {
 
         const containerElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -278,9 +281,9 @@ class Gear {
             const pathParts = ["M"];
             for (let iP = 0; iP < this.periodsCount; iP++) {
                 const periodStartingAngle = this.orientation * iP * this.periodAngle;
-                this.periodRays.forEach(periodRay => {
-                    const angle = normalizeAngle(periodStartingAngle + periodRay.angle);
-                    const radius = periodRay.radius;
+                this.periodSegments.forEach(periodSegment => {
+                    const angle = normalizeAngle(periodStartingAngle + periodSegment.startingAngle);
+                    const radius = periodSegment.startingRadius;
                     const x = radius * Math.cos(angle);
                     const y = radius * Math.sin(angle);
                     pathParts.push(`${x} ${y}`);
@@ -297,17 +300,17 @@ class Gear {
 
         // rays
         {
-            const firstRay = this.periodRays[0];
-            if (!firstRay) {
+            const firstPeriodSegment = this.periodSegments[0];
+            if (!firstPeriodSegment) {
                 throw new Error("Gear has no rays.");
             }
-            const length = Math.min(firstRay.radius, 0.05);
+            const length = Math.min(firstPeriodSegment.startingRadius, 0.05);
 
             const pathParts: string[] = [];
             for (let i = 0; i < this.periodsCount; i++) {
                 pathParts.push("M0 0");
 
-                const angle = firstRay.angle + i * this.periodAngle;
+                const angle = firstPeriodSegment.startingAngle + i * this.periodAngle;
                 const x = length * Math.cos(angle);
                 const y = length * Math.sin(angle);
                 pathParts.push(`L${x} ${y}`);
