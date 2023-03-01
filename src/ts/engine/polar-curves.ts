@@ -34,7 +34,7 @@ function getRadiusForLine(a: number, b: number, c: number, angle: number): numbe
 
 function buildEllipse(a: number, b: number): PolarCurve {
     const periodsCount = 2;
-    const periodStepsCount = 30;
+    const periodStepsCount = 60;
     const periodRays: Ray[] = [];
     for (let i = 0; i < periodStepsCount; i++) {
         const percentage = i / periodStepsCount;
@@ -75,7 +75,7 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
     const center = { x: centerOffset, y: 0 };
 
     const periodsCount = 1;
-    const raysCount = 60;
+    const raysCount = 120;
 
     const periodRays: Ray[] = [];
     for (let i = 0; i < raysCount; i++) {
@@ -141,6 +141,31 @@ function buildHeart(size: number): PolarCurve {
     };
 }
 
+function buildPolygon(size: number, sides: number): PolarCurve {
+    const periodsCount = sides;
+    const raysCount = 60;
+
+    const maxPeriodAngle = TWO_PI / sides;
+    const p1 = { x: size, y: 0 };
+    const p2 = { x: size * Math.cos(maxPeriodAngle), y: size * Math.sin(maxPeriodAngle) };
+
+    const a = (p1.y - p2.y) / (p2.x - p1.x);
+    const b = 1;
+    const c = p1.y + a * p1.x;
+
+    const periodRays: Ray[] = [];
+    for (let i = 0; i < raysCount; i++) {
+        const angle = i / raysCount * maxPeriodAngle;
+        const radius = getRadiusForLine(a, b, c, angle);
+        periodRays.push({ angle, radius });
+    }
+
+    return {
+        periodRays,
+        periodsCount,
+    };
+}
+
 export type {
     PolarCurve,
 };
@@ -149,5 +174,6 @@ export {
     buildEllipse,
     buildHeart,
     buildOffCircle,
+    buildPolygon,
 };
 

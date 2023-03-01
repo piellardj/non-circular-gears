@@ -11,6 +11,9 @@ enum EGearShape {
     ELLIPSE = "ellipse",
     OFF_CIRCLE = "off-circle",
     HEART = "heart",
+    TRIANGLE = "triangle",
+    SQUARE = "square",
+    PENTAGON = "pentagon",
 }
 
 function callCallbacks(callbacks: VoidFunction[]): void {
