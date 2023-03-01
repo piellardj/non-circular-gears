@@ -1,4 +1,4 @@
-import { normalizeAngle, TWO_PI } from "./angle-utils";
+import { angleDifference } from "./angle-utils";
 
 type Ray = {
     angle: number;
@@ -6,11 +6,7 @@ type Ray = {
 };
 
 function computeDeltaAngle(ray1: Ray, ray2: Ray): number {
-    const rawDifference = normalizeAngle(ray2.angle - ray1.angle);
-    if (rawDifference <= Math.PI) {
-        return rawDifference;
-    }
-    return TWO_PI - rawDifference;
+    return angleDifference(ray1.angle, ray2.angle);
 }
 
 function computeDistanceSquared(ray1: Ray, ray2: Ray): number {

@@ -54,16 +54,29 @@ const data = {
                             value: "heart",
                         },
                         {
-                            label: "Triangle",
-                            value: "triangle",
-                        },
-                        {
                             label: "Square",
                             value: "square",
                         },
                         {
+                            label: "Triangle",
+                            value: "triangle",
+                        },
+                        {
+                            label: "Off-Triangle",
+                            value: "off-triangle",
+                        },
+
+                        {
+                            label: "Off-Square",
+                            value: "off-square",
+                        },
+                        {
                             label: "Pentagon",
                             value: "pentagon",
+                        },
+                        {
+                            label: "Off-Pentagon",
+                            value: "off-pentagon",
                         },
                     ]
                 },

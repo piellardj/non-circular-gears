@@ -1,5 +1,5 @@
 import { Gear } from "../engine/gear";
-import { buildEllipse, buildHeart, buildOffCircle, buildPolygon, PolarCurve } from "../engine/polar-curves";
+import { buildEllipse, buildHeart, buildOffCircle, buildOffPolygon, buildPolygon, PolarCurve } from "../engine/polar-curves";
 import { EGearShape } from "../parameters";
 import { SvgCanvas } from "../svg-canvas";
 import { distance } from "../utils";
@@ -45,6 +45,15 @@ class RandomScene extends Scene {
                 break;
             case EGearShape.PENTAGON:
                 polarCurve = buildPolygon(size, 5);
+                break;
+            case EGearShape.OFF_TRIANGLE:
+                polarCurve = buildOffPolygon(size, 3, 0.6);
+                break;
+            case EGearShape.OFF_SQUARE:
+                polarCurve = buildOffPolygon(size, 4, 0.6);
+                break;
+            case EGearShape.OFF_PENTAGON:
+                polarCurve = buildOffPolygon(size, 5, 0.6);
                 break;
             default:
                 throw new Error(centralGear);

@@ -12,8 +12,11 @@ enum EGearShape {
     OFF_CIRCLE = "off-circle",
     HEART = "heart",
     TRIANGLE = "triangle",
+    OFF_TRIANGLE = "off-triangle",
     SQUARE = "square",
+    OFF_SQUARE = "off-square",
     PENTAGON = "pentagon",
+    OFF_PENTAGON = "off-pentagon",
 }
 
 function callCallbacks(callbacks: VoidFunction[]): void {
@@ -33,7 +36,7 @@ Page.Button.addObserver(controlId.RESET_BUTTON_ID, () => {
 Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
     const gearShapes = Object.values(EGearShape);
     const shapeId = Math.floor(Math.random() * gearShapes.length);
-    const gearShape = gearShapes[shapeId];
+    const gearShape = gearShapes[shapeId] as string;
     Page.Select.setValue(controlId.CENTRAL_GEAR_SELECT_ID, gearShape);
     callCallbacks(Parameters.onReset);
 });

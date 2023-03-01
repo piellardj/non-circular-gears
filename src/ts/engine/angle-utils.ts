@@ -15,10 +15,24 @@ function toDegrees(angleInRadians: number): number {
     return 180 / Math.PI * angleInRadians;
 }
 
+function toRadians(angleInDegrees: number): number {
+    return Math.PI / 180 * angleInDegrees;
+}
+
+function angleDifference(angle1: number, angle2: number): number {
+    const rawDifference = normalizeAngle(angle2 - angle1);
+    if (rawDifference <= Math.PI) {
+        return rawDifference;
+    }
+    return TWO_PI - rawDifference;
+}
+
 export {
+    angleDifference,
     makeAnglePositive,
     normalizeAngle,
     toDegrees,
+    toRadians,
     TWO_PI,
 };
 
