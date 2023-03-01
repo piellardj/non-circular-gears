@@ -35,10 +35,10 @@ const data = {
                     step: 0.05,
                 },
                 {
-                    type: Demopage.supportedControls.Tabs,
+                    type: Demopage.supportedControls.Select,
                     title: "Central gear",
-                    id: "central-gear-tabs-id",
-                    unique: true,
+                    id: "central-gear-select-id",
+                    placeholder: "<unknown>",
                     options: [
                         {
                             label: "Ellipse",

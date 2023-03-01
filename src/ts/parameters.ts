@@ -2,7 +2,7 @@
 
 const controlId = {
     ROTATION_SPEED_RANGE: "rotation-speed-range-id",
-    CENTRAL_GEAR_TABS_ID: "central-gear-tabs-id",
+    CENTRAL_GEAR_SELECT_ID: "central-gear-select-id",
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
 };
@@ -19,7 +19,7 @@ function callCallbacks(callbacks: VoidFunction[]): void {
     }
 }
 
-Page.Tabs.addObserver(controlId.CENTRAL_GEAR_TABS_ID, () => {
+Page.Select.addObserver(controlId.CENTRAL_GEAR_SELECT_ID, () => {
     callCallbacks(Parameters.onGearShapeChange);
 });
 
@@ -31,7 +31,7 @@ Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
     const gearShapes = Object.values(EGearShape);
     const shapeId = Math.floor(Math.random() * gearShapes.length);
     const gearShape = gearShapes[shapeId];
-    Page.Tabs.setValues(controlId.CENTRAL_GEAR_TABS_ID, [gearShape]);
+    Page.Select.setValue(controlId.CENTRAL_GEAR_SELECT_ID, gearShape);
     callCallbacks(Parameters.onReset);
 });
 
@@ -41,7 +41,7 @@ abstract class Parameters {
     }
 
     public static get gearShape(): EGearShape {
-        return Page.Tabs.getValues(controlId.CENTRAL_GEAR_TABS_ID)[0] as EGearShape;
+        return Page.Select.getValue(controlId.CENTRAL_GEAR_SELECT_ID) as EGearShape;
     }
 
     public static onGearShapeChange: VoidFunction[] = [];
