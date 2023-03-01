@@ -2,7 +2,7 @@ import { Gear } from "../engine/gear";
 import { Point } from "../engine/point";
 import { Parameters } from "../parameters";
 import { SvgCanvas } from "../svg-canvas";
-import { distance, distanceSquared } from "../utils";
+import { distance } from "../utils";
 
 function removeFromArray<T>(array: T[], element: T): void {
     while (array.length > 0) {
@@ -112,10 +112,10 @@ abstract class Scene {
 
     private findClosestGear(center: Point): Gear {
         let closestGear = this.mainGear;
-        let lowestDistance = distanceSquared(center, closestGear.center);
+        let lowestDistance = distance(center, closestGear.center) - closestGear.maxRadius;
 
         for (const gear of this.secondaryGears) {
-            const currentDistance = distanceSquared(center, gear.center);
+            const currentDistance = distance(center, gear.center) - gear.maxRadius;
             if (currentDistance < lowestDistance) {
                 closestGear = gear;
                 lowestDistance = currentDistance;

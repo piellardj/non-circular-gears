@@ -274,7 +274,7 @@ class Gear {
                 yield {
                     angle: normalizeAngle(periodStartingAngle + periodSegment.startingAngle),
                     radius: periodSegment.startingRadius,
-                }
+                };
             }
         }
     }
