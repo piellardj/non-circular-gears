@@ -4,6 +4,7 @@ const controlId = {
     ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     CENTRAL_GEAR_TABS_ID: "central-gear-tabs-id",
     RESET_BUTTON_ID: "reset-button",
+    RANDOM_BUTTON_ID: "random-button",
 };
 
 enum EGearShape {
@@ -23,6 +24,14 @@ Page.Tabs.addObserver(controlId.CENTRAL_GEAR_TABS_ID, () => {
 });
 
 Page.Button.addObserver(controlId.RESET_BUTTON_ID, () => {
+    callCallbacks(Parameters.onReset);
+});
+
+Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
+    const gearShapes = Object.values(EGearShape);
+    const shapeId = Math.floor(Math.random() * gearShapes.length);
+    const gearShape = gearShapes[shapeId];
+    Page.Tabs.setValues(controlId.CENTRAL_GEAR_TABS_ID, [gearShape]);
     callCallbacks(Parameters.onReset);
 });
 

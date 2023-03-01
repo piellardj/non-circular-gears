@@ -60,6 +60,11 @@ const data = {
                     id: "reset-button",
                     label: "Reset",
                 },
+                {
+                    type: Demopage.supportedControls.Button,
+                    id: "random-button",
+                    label: "Random",
+                },
             ]
         },
     ],
