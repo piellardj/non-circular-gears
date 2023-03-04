@@ -101,6 +101,16 @@ const data = {
                 },
             ]
         },
+        {
+            title:"Display",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Show teeth",
+                    id: "show-teeth-checkbox-id",
+                },
+            ]
+        }
     ],
 };
 

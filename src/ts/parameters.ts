@@ -5,6 +5,7 @@ const controlId = {
     CENTRAL_GEAR_SELECT_ID: "central-gear-select-id",
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
+    SHOW_TEETH_CHECKBOX_ID: "show-teeth-checkbox-id",
 };
 
 enum EGearShape {
@@ -50,6 +51,10 @@ abstract class Parameters {
 
     public static get gearShape(): EGearShape {
         return Page.Select.getValue(controlId.CENTRAL_GEAR_SELECT_ID) as EGearShape;
+    }
+
+    public static get showTeeth(): boolean {
+        return Page.Checkbox.isChecked(controlId.SHOW_TEETH_CHECKBOX_ID);
     }
 
     public static onGearShapeChange: VoidFunction[] = [];

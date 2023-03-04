@@ -66,7 +66,10 @@ abstract class Scene {
         for (const secondaryGear of this.secondaryGears) {
             secondaryGear.update();
         }
+
         this.mobileGear?.update();
+
+        this.updateDisplay();
     }
 
     public attach(): void {
@@ -110,6 +113,14 @@ abstract class Scene {
 
     protected get allGears(): Gear[] {
         return [this.mainGear, ...this.secondaryGears];
+    }
+
+    private updateDisplay(): void {
+        const showTeeth = Parameters.showTeeth;
+        for (const gear of this.allGears) {
+            gear.updateDisplay(showTeeth);
+        }
+        this.mobileGear?.updateDisplay(showTeeth);
     }
 
     private findClosestGear(center: Point): Gear {

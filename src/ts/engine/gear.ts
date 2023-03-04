@@ -1,7 +1,7 @@
 import { normalizeAngle, toDegrees, TWO_PI } from "./angle-utils";
-import type { Point } from "./point";
+import type { Point, Vector } from "./point";
 import type { PolarCurve } from "./polar-curves";
-import { computeDeltaAngle, computeDistance, type Ray, type ReadonlyRay } from "./rays";
+import { computeDeltaAngle, computeDistance, computeNormal, type Ray, type ReadonlyRay } from "./rays";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -23,9 +23,24 @@ type Segment = {
     readonly deltaDistance: number; // between starting and next rays
 };
 
+type SurfaceFragment = {
+    point: Point;
+    normal: Vector;
+};
+
+enum ESurfaceType {
+    NONE,
+    SMOOTH,
+    TEETH,
+}
+
 type SvgRepresentation = {
-    container: SVGElement;
-    rotationElement: SVGElement;
+    readonly container: SVGElement;
+    readonly rotationElement: SVGElement;
+    readonly gearElement: SVGElement;
+    surfaceType: ESurfaceType;
+    computedSmoothPath: string | null;
+    computedTeethPath: string | null;
 };
 
 const svgStyleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
@@ -141,14 +156,18 @@ class Gear {
         return finalTry.distance;
     }
 
-    public readonly svgElement: SVGElement;
-    private readonly svgRotationElement: SVGElement;
+    private readonly svgRepresentation: SvgRepresentation;
+    public get svgElement(): SVGElement {
+        return this.svgRepresentation.container;
+    }
+
     private readonly periodSegments: ReadonlyArray<Segment>;
     private readonly periodSegmentsReverse: ReadonlyArray<Segment>;
     private readonly periodAngle: number;
     private readonly periodSurface: number;
     public readonly minRadius: number;
     public readonly maxRadius: number;
+    private readonly toothSize: number;
     private rotation: number = 0;
 
     private constructor(
@@ -192,17 +211,18 @@ class Gear {
                 deltaDistance,
             };
         });
+        this.periodSegmentsReverse = this.periodSegments.slice().reverse();
 
         this.periodSurface = 0;
         for (const segment of this.periodSegments) {
             this.periodSurface += segment.deltaDistance;
         }
 
-        this.periodSegmentsReverse = this.periodSegments.slice().reverse();
+        const idealToothSize = 0.02;
+        const teethCount = Math.ceil(this.periodSurface / idealToothSize);
+        this.toothSize = this.periodSurface / teethCount;
 
-        const svgRepresentation = this.buildSvgRepresentation();
-        this.svgElement = svgRepresentation.container;
-        this.svgRotationElement = svgRepresentation.rotationElement;
+        this.svgRepresentation = this.buildSvgRepresentation();
     }
 
     public rotate(rotation: number): void {
@@ -210,11 +230,6 @@ class Gear {
             throw new Error("Cannot rotate child gear.");
         }
         this.setRotationInternal(this.rotation + rotation);
-        this.updateSvgRotation();
-    }
-
-    private setRotationInternal(rotation: number): void {
-        this.rotation = normalizeAngle(rotation);
     }
 
     public update(): void {
@@ -234,12 +249,30 @@ class Gear {
             this.setRotationInternal(this.rotation + relativeRotation);
         }
         this.parent.rotation = previousMasterAngle;
-
-        this.updateSvgRotation();
     }
 
-    private updateSvgRotation(): void {
-        this.svgRotationElement.setAttribute("transform", `rotate(${toDegrees(this.rotation)})`);
+    public updateDisplay(showTeeth: boolean): void {
+        this.svgRepresentation.rotationElement.setAttribute("transform", `rotate(${toDegrees(this.rotation)})`);
+
+        if (showTeeth && this.svgRepresentation.surfaceType !== ESurfaceType.TEETH) {
+            if (!this.svgRepresentation.computedTeethPath) {
+                const periodPoints = this.buildPeriodPointsWithTeeth();
+                this.svgRepresentation.computedTeethPath = this.buildSvgPath(periodPoints);
+            }
+            this.svgRepresentation.gearElement.setAttribute("d", this.svgRepresentation.computedTeethPath);
+            this.svgRepresentation.surfaceType = ESurfaceType.TEETH;
+        } else if (!showTeeth && this.svgRepresentation.surfaceType !== ESurfaceType.SMOOTH) {
+            if (!this.svgRepresentation.computedSmoothPath) {
+                const periodPoints = this.buildPeriodPointsSmooth();
+                this.svgRepresentation.computedSmoothPath = this.buildSvgPath(periodPoints);
+            }
+            this.svgRepresentation.gearElement.setAttribute("d", this.svgRepresentation.computedSmoothPath);
+            this.svgRepresentation.surfaceType = ESurfaceType.SMOOTH;
+        }
+    }
+
+    private setRotationInternal(rotation: number): void {
+        this.rotation = normalizeAngle(rotation);
     }
 
     private getCurrentRotatedSurface(): number {
@@ -290,6 +323,28 @@ class Gear {
         throw new Error();
     }
 
+    private *walkOnPeriod(stepSize: number): Generator<SurfaceFragment> {
+        let positionOnSegment = 0;
+        for (const periodSegment of this.periodSegments) {
+            const normal = computeNormal(periodSegment.startingRay, periodSegment.nextRay);
+
+            while (positionOnSegment < periodSegment.deltaDistance) {
+                const x = positionOnSegment / periodSegment.deltaDistance; // relative advancement
+
+                const angle = periodSegment.startingRay.angle + this.orientation * x * periodSegment.deltaAngle;
+                const radius = periodSegment.startingRay.radius + x * (periodSegment.nextRay.radius - periodSegment.startingRay.radius);
+                const point = {
+                    x: radius * Math.cos(angle),
+                    y: radius * Math.sin(angle),
+                };
+                yield { point, normal };
+                positionOnSegment += stepSize;
+            }
+
+            positionOnSegment -= periodSegment.deltaDistance;
+        }
+    }
+
     private buildPeriodPointsSmooth(): Point[] {
         const points = this.periodSegments.map(segment => {
             return {
@@ -297,6 +352,23 @@ class Gear {
                 y: segment.startingRay.radius * Math.sin(segment.startingRay.angle),
             }
         });
+        return points;
+    }
+
+    private buildPeriodPointsWithTeeth(): Point[] {
+        const points: Point[] = [];
+        const stepSize = this.toothSize / 10;
+        let i = 0;
+        for (const surfaceFragment of this.walkOnPeriod(stepSize)) {
+            const cos = Math.cos(i * TWO_PI / this.toothSize - Math.PI / 2);
+            const teethOffset = 0.0025 * this.orientation * Math.sign(cos) * Math.pow(Math.abs(cos), 1 / 5);
+
+            points.push({
+                x: surfaceFragment.point.x + teethOffset * surfaceFragment.normal.x,
+                y: surfaceFragment.point.y + teethOffset * surfaceFragment.normal.y,
+            });
+            i += stepSize;
+        }
         return points;
     }
 
@@ -320,23 +392,15 @@ class Gear {
     }
 
     private buildSvgRepresentation(): SvgRepresentation {
-
         const containerElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
         containerElement.setAttribute("transform", `translate(${this.center.x},${this.center.y})`);
 
         const rotationElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
         containerElement.appendChild(rotationElement);
 
-        // body
-        {
-            const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
-
-            const periodPoints = this.buildPeriodPointsSmooth();
-            const path = this.buildSvgPath(periodPoints);
-            gearElement.setAttribute("d", path);
-            gearElement.setAttribute("class", this.parent ? "gear" : "gear main");
-            rotationElement.appendChild(gearElement);
-        }
+        const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        gearElement.setAttribute("class", this.parent ? "gear" : "gear main");
+        rotationElement.appendChild(gearElement);
 
         const firstPeriodSegment = this.periodSegments[0];
         if (!firstPeriodSegment) {
@@ -391,6 +455,10 @@ class Gear {
         return {
             container: containerElement,
             rotationElement,
+            gearElement,
+            surfaceType: ESurfaceType.NONE,
+            computedSmoothPath: null,
+            computedTeethPath: null,
         };
     }
 }
