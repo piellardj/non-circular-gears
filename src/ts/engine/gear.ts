@@ -27,8 +27,27 @@ type SvgRepresentation = {
     rotationElement: SVGElement;
 };
 
+const svgStyleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
+svgStyleElement.innerHTML = `.gear {
+    fill: red;
+    fill-opacity: 0.3;
+    stroke: red;
+    stroke-width: 0.006;
+}
+.gear.main {
+    fill: #FF6A00;
+    stroke: #FF6A00;
+}
+.gear-rays {
+    stroke: green;
+    stroke-width: 0.006;
+}
+.gear-axis {
+    fill: green;
+}`
 class Gear {
     public static readonly centerRadius = 0.015;
+    public static readonly svgStyleElement = svgStyleElement;
 
     public static create(center: ReadonlyPoint, polarCurve: PolarCurve): Gear {
         return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1);
@@ -300,17 +319,12 @@ class Gear {
             }
             pathParts.push("Z");
 
-            const color = this.parent ? "red" : "#FF6A00";
             const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
             gearElement.setAttribute("d", pathParts.join(" "));
-            gearElement.setAttribute("fill", color);
-            gearElement.setAttribute("fill-opacity", "0.3");
-            gearElement.setAttribute("stroke", color);
-            gearElement.setAttribute("stroke-width", "0.006");
+            gearElement.setAttribute("class", this.parent ? "gear" : "gear main");
             rotationElement.appendChild(gearElement);
         }
 
-        const centerColor = "green";
         const firstPeriodSegment = this.periodSegments[0];
         if (!firstPeriodSegment) {
             throw new Error("Gear has no rays.");
@@ -331,8 +345,7 @@ class Gear {
             }
             const raysElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
             raysElement.setAttribute("d", pathParts.join(""));
-            raysElement.setAttribute("stroke", centerColor);
-            raysElement.setAttribute("stroke-width", "0.006");
+            raysElement.setAttribute("class", "gear-rays");
             rotationElement.appendChild(raysElement);
         }
 
@@ -358,7 +371,7 @@ class Gear {
                 centerElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 centerElement.setAttribute("d", pathParts.join(""));
             }
-            centerElement.setAttribute("fill", centerColor);
+            centerElement.setAttribute("class", "gear-axis");
             rotationElement.appendChild(centerElement);
         }
 

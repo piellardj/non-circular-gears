@@ -27,6 +27,8 @@ abstract class Scene {
 
     protected constructor(svgCanvas: SvgCanvas, mainGear: Gear) {
         this.svgCanvas = svgCanvas;
+        this.svgCanvas.addChild(Gear.svgStyleElement);
+
         this.mainGear = mainGear;
 
         this.onMouseMove = () => {
