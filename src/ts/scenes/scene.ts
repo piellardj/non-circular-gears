@@ -1,6 +1,6 @@
-import { Gear } from "../engine/gear";
+import { ESurfaceType, Gear } from "../engine/gear";
 import { Point } from "../engine/point";
-import { Parameters } from "../parameters";
+import { ETeethSize, Parameters } from "../parameters";
 import { SvgCanvas } from "../svg-canvas";
 import { distance } from "../utils";
 
@@ -117,10 +117,24 @@ abstract class Scene {
 
     private updateDisplay(): void {
         const showTeeth = Parameters.showTeeth;
-        for (const gear of this.allGears) {
-            gear.updateDisplay(showTeeth);
+        const teethSize = Parameters.teethSize;
+        let surfaceType: ESurfaceType;
+        if (showTeeth) {
+            if (teethSize === ETeethSize.SMALL) {
+                surfaceType = ESurfaceType.TEETH_SMALL;
+            } else if (teethSize === ETeethSize.MEDIUM) {
+                surfaceType = ESurfaceType.TEETH_MEDIUM;
+            } else {
+                surfaceType = ESurfaceType.TEETH_LARGE;
+            }
+        } else {
+            surfaceType = ESurfaceType.SMOOTH;
         }
-        this.mobileGear?.updateDisplay(showTeeth);
+
+        for (const gear of this.allGears) {
+            gear.updateDisplay(surfaceType);
+        }
+        this.mobileGear?.updateDisplay(surfaceType);
     }
 
     private findClosestGear(center: Point): Gear {

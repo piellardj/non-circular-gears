@@ -31,16 +31,17 @@ type SurfaceFragment = {
 enum ESurfaceType {
     NONE,
     SMOOTH,
-    TEETH,
+    TEETH_SMALL,
+    TEETH_MEDIUM,
+    TEETH_LARGE,
 }
 
 type SvgRepresentation = {
     readonly container: SVGElement;
     readonly rotationElement: SVGElement;
     readonly gearElement: SVGElement;
-    surfaceType: ESurfaceType;
-    computedSmoothPath: string | null;
-    computedTeethPath: string | null;
+    currentSurfaceType: ESurfaceType;
+    computedPaths: Record<number, string>;
 };
 
 const svgStyleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
@@ -167,7 +168,6 @@ class Gear {
     private readonly periodSurface: number;
     public readonly minRadius: number;
     public readonly maxRadius: number;
-    private readonly toothSize: number;
     private rotation: number = 0;
 
     private constructor(
@@ -218,10 +218,6 @@ class Gear {
             this.periodSurface += segment.deltaDistance;
         }
 
-        const idealToothSize = 0.02;
-        const teethCount = Math.ceil(this.periodSurface / idealToothSize);
-        this.toothSize = this.periodSurface / teethCount;
-
         this.svgRepresentation = this.buildSvgRepresentation();
     }
 
@@ -251,23 +247,38 @@ class Gear {
         this.parent.rotation = previousMasterAngle;
     }
 
-    public updateDisplay(showTeeth: boolean): void {
+    public updateDisplay(surfaceType: ESurfaceType): void {
         this.svgRepresentation.rotationElement.setAttribute("transform", `rotate(${toDegrees(this.rotation)})`);
 
-        if (showTeeth && this.svgRepresentation.surfaceType !== ESurfaceType.TEETH) {
-            if (!this.svgRepresentation.computedTeethPath) {
-                const periodPoints = this.buildPeriodPointsWithTeeth();
-                this.svgRepresentation.computedTeethPath = this.buildSvgPath(periodPoints);
+        if (this.svgRepresentation.currentSurfaceType !== surfaceType) {
+            const showTeeth = [ESurfaceType.TEETH_SMALL, ESurfaceType.TEETH_MEDIUM, ESurfaceType.TEETH_LARGE].includes(surfaceType);
+            if (showTeeth) {
+                let path = this.svgRepresentation.computedPaths[surfaceType];
+                if (!path) {
+                    let idealToothSize;
+                    if (surfaceType === ESurfaceType.TEETH_SMALL) {
+                        idealToothSize = 0.02;
+                    } else if (surfaceType === ESurfaceType.TEETH_MEDIUM) {
+                        idealToothSize = 0.04;
+                    } else {
+                        idealToothSize = 0.06;
+                    }
+                    const periodPoints = this.buildPeriodPointsWithTeeth(idealToothSize);
+                    path = this.buildSvgPath(periodPoints);
+                    this.svgRepresentation.computedPaths[surfaceType] = path;
+                }
+                this.svgRepresentation.gearElement.setAttribute("d", path);
+            } else {
+                let path = this.svgRepresentation.computedPaths[ESurfaceType.SMOOTH];
+                if (!path) {
+                    const periodPoints = this.buildPeriodPointsSmooth();
+                    path = this.buildSvgPath(periodPoints);
+                    this.svgRepresentation.computedPaths[surfaceType] = path;
+                }
+                this.svgRepresentation.gearElement.setAttribute("d", path);
             }
-            this.svgRepresentation.gearElement.setAttribute("d", this.svgRepresentation.computedTeethPath);
-            this.svgRepresentation.surfaceType = ESurfaceType.TEETH;
-        } else if (!showTeeth && this.svgRepresentation.surfaceType !== ESurfaceType.SMOOTH) {
-            if (!this.svgRepresentation.computedSmoothPath) {
-                const periodPoints = this.buildPeriodPointsSmooth();
-                this.svgRepresentation.computedSmoothPath = this.buildSvgPath(periodPoints);
-            }
-            this.svgRepresentation.gearElement.setAttribute("d", this.svgRepresentation.computedSmoothPath);
-            this.svgRepresentation.surfaceType = ESurfaceType.SMOOTH;
+
+            this.svgRepresentation.currentSurfaceType = surfaceType;
         }
     }
 
@@ -355,13 +366,16 @@ class Gear {
         return points;
     }
 
-    private buildPeriodPointsWithTeeth(): Point[] {
+    private buildPeriodPointsWithTeeth(idealToothSize: number): Point[] {
+        const teethCount = Math.ceil(this.periodSurface / idealToothSize);
+        const toothSize = this.periodSurface / teethCount;
+
         const points: Point[] = [];
-        const stepSize = this.toothSize / 10;
+        const stepSize = toothSize / 10;
         let i = 0;
         for (const surfaceFragment of this.walkOnPeriod(stepSize)) {
-            const cos = Math.cos(i * TWO_PI / this.toothSize - Math.PI / 2);
-            const teethOffset = 0.0025 * this.orientation * Math.sign(cos) * Math.pow(Math.abs(cos), 1 / 5);
+            const cos = Math.cos(i * TWO_PI / toothSize - Math.PI / 2);
+            const teethOffset = idealToothSize / 10 * this.orientation * Math.sign(cos) * Math.pow(Math.abs(cos), 1 / 5);
 
             points.push({
                 x: surfaceFragment.point.x + teethOffset * surfaceFragment.normal.x,
@@ -456,14 +470,14 @@ class Gear {
             container: containerElement,
             rotationElement,
             gearElement,
-            surfaceType: ESurfaceType.NONE,
-            computedSmoothPath: null,
-            computedTeethPath: null,
+            currentSurfaceType: ESurfaceType.NONE,
+            computedPaths: {},
         };
     }
 }
 
 export {
+    ESurfaceType,
     Gear,
 };
 

@@ -6,6 +6,7 @@ const controlId = {
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
     SHOW_TEETH_CHECKBOX_ID: "show-teeth-checkbox-id",
+    TEETH_SIZE_TABS_ID: "teeth-size-tabs-id",
 };
 
 enum EGearShape {
@@ -20,6 +21,12 @@ enum EGearShape {
     OFF_PENTAGON = "off-pentagon",
     CIRCLE = "circle",
     RANDOM = "random",
+}
+
+enum ETeethSize {
+    SMALL = "small",
+    MEDIUM = "medium",
+    LARGE = "large",
 }
 
 function callCallbacks(callbacks: VoidFunction[]): void {
@@ -57,6 +64,10 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.SHOW_TEETH_CHECKBOX_ID);
     }
 
+    public static get teethSize(): ETeethSize {
+        return Page.Tabs.getValues(controlId.TEETH_SIZE_TABS_ID)[0] as ETeethSize;
+    }
+
     public static onGearShapeChange: VoidFunction[] = [];
 
     public static onReset: VoidFunction[] = [];
@@ -64,6 +75,7 @@ abstract class Parameters {
 
 export {
     EGearShape,
+    ETeethSize,
     Parameters,
 };
 

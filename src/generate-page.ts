@@ -109,6 +109,27 @@ const data = {
                     title: "Show teeth",
                     id: "show-teeth-checkbox-id",
                 },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Teeth size",
+                    id: "teeth-size-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            label: "Small",
+                            value: "small",
+                        },
+                        {
+                            label: "Medium",
+                            value: "medium",
+                            checked: true,
+                        },
+                        {
+                            label: "Large",
+                            value: "large",
+                        },
+                    ]
+                },
             ]
         }
     ],
