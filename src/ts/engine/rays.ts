@@ -5,6 +5,11 @@ type Ray = {
     radius: number;
 };
 
+type ReadonlyRay = {
+    readonly angle: number;
+    readonly radius: number;
+};
+
 function computeDeltaAngle(ray1: Ray, ray2: Ray): number {
     return angleDifference(ray1.angle, ray2.angle);
 }
@@ -20,6 +25,7 @@ function computeDistance(ray1: Ray, ray2: Ray): number {
 
 export type {
     Ray,
+    ReadonlyRay,
 };
 export {
     computeDeltaAngle,

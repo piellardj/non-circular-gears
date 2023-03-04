@@ -1,6 +1,6 @@
-import { computeDeltaAngle, computeDistance, Ray } from "./rays";
 import { normalizeAngle, toDegrees, TWO_PI } from "./angle-utils";
 import { PolarCurve } from "./polar-curves";
+import { computeDeltaAngle, computeDistance, Ray, ReadonlyRay } from "./rays";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -16,11 +16,10 @@ type ConstructionResult = {
 };
 
 type Segment = {
-    startingAngle: number;
-    startingRadius: number;
-    nextRadius: number;
-    deltaAngle: number; // until next ray
-    deltaDistance: number; // until next ray
+    readonly startingRay: ReadonlyRay;
+    readonly nextRay: ReadonlyRay;
+    readonly deltaAngle: number; // between starting and next rays
+    readonly deltaDistance: number; // between starting and next rays
 };
 
 type SvgRepresentation = {
@@ -60,13 +59,13 @@ class Gear {
         for (const periodSegment of master.periodSegments) {
             periodRays.push({
                 angle,
-                radius: distance - periodSegment.startingRadius,
+                radius: distance - periodSegment.startingRay.radius,
             });
 
             const dSegmentLengthSquared = periodSegment.deltaDistance * periodSegment.deltaDistance;
 
-            const r1 = distance - periodSegment.startingRadius;
-            const r2 = distance - periodSegment.nextRadius;
+            const r1 = distance - periodSegment.startingRay.radius;
+            const r2 = distance - periodSegment.nextRay.radius;
             const dAngle = Math.acos((r1 * r1 + r2 * r2 - dSegmentLengthSquared) / (2 * r1 * r2));
             if (isNaN(dAngle)) {
                 throw new Error("Should not happen");
@@ -124,7 +123,7 @@ class Gear {
 
     public readonly svgElement: SVGElement;
     private readonly svgRotationElement: SVGElement;
-    private readonly periodSegments: Segment[];
+    private readonly periodSegments: ReadonlyArray<Segment>;
     private readonly periodSegmentsReverse: ReadonlyArray<Segment>;
     private readonly periodAngle: number;
     private readonly periodSurface: number;
@@ -167,9 +166,8 @@ class Gear {
             const deltaDistance = computeDistance(nextRay, currentRay);
 
             return {
-                startingAngle: currentRay.angle,
-                startingRadius: currentRay.radius,
-                nextRadius: nextRay.radius,
+                startingRay: { angle: currentRay.angle, radius: currentRay.radius },
+                nextRay,
                 deltaAngle,
                 deltaDistance,
             };
@@ -277,8 +275,8 @@ class Gear {
             const periodStartingAngle = this.orientation * iP * this.periodAngle;
             for (const periodSegment of this.periodSegments) {
                 yield {
-                    angle: normalizeAngle(periodStartingAngle + periodSegment.startingAngle),
-                    radius: periodSegment.startingRadius,
+                    angle: normalizeAngle(periodStartingAngle + periodSegment.startingRay.angle),
+                    radius: periodSegment.startingRay.radius,
                 };
             }
         }
@@ -320,13 +318,13 @@ class Gear {
 
         // rays
         {
-            const length = Math.min(firstPeriodSegment.startingRadius, 0.05);
+            const length = Math.min(firstPeriodSegment.startingRay.radius, 0.05);
 
             const pathParts: string[] = [];
             for (let i = 0; i < this.periodsCount; i++) {
                 pathParts.push("M0 0");
 
-                const angle = firstPeriodSegment.startingAngle + i * this.periodAngle;
+                const angle = firstPeriodSegment.startingRay.angle + i * this.periodAngle;
                 const x = length * Math.cos(angle);
                 const y = length * Math.sin(angle);
                 pathParts.push(`L${x} ${y}`);
@@ -351,7 +349,7 @@ class Gear {
                 const pathParts: string[] = [];
                 for (let i = 0; i < this.periodsCount; i++) {
                     const command = (i === 0) ? "M" : "L";
-                    const angle = firstPeriodSegment.startingAngle + i * this.periodAngle;
+                    const angle = firstPeriodSegment.startingRay.angle + i * this.periodAngle;
                     const x = radius * Math.cos(angle);
                     const y = radius * Math.sin(angle);
                     pathParts.push(`${command}${x} ${y}`);
