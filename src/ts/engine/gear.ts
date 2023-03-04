@@ -47,9 +47,9 @@ type SvgRepresentation = {
 const svgStyleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
 svgStyleElement.innerHTML = `.gear {
     fill: red;
-    fill-opacity: 0.3;
+    fill-opacity: 0.4;
     stroke: red;
-    stroke-width: 0.006;
+    stroke-width: 0.004;
 }
 .gear.main {
     fill: #FF6A00;
