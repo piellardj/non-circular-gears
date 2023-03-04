@@ -67,7 +67,6 @@ const data = {
                             label: "Off-Triangle",
                             value: "off-triangle",
                         },
-
                         {
                             label: "Off-Square",
                             value: "off-square",
@@ -79,6 +78,10 @@ const data = {
                         {
                             label: "Off-Pentagon",
                             value: "off-pentagon",
+                        },
+                        {
+                            label: "Circle",
+                            value: "circle",
                         },
                         {
                             label: "Random",

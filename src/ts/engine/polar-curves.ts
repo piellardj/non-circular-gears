@@ -74,13 +74,13 @@ function buildEllipse(a: number, b: number): PolarCurve {
 }
 
 function buildCircle(radius: number): PolarCurve {
-    const periodsCount = 60;
-    const raysCount = 2 * periodsCount;
+    const periodsCount = 3;
+    const periodSize = 40;
 
     const periodRays: Ray[] = [];
-    for (let i = 0; i < 2; i++) {
-        const percentage = i / raysCount;
-        const angle = TWO_PI * percentage;
+    for (let i = 0; i < periodSize; i++) {
+        const percentage = i / periodSize;
+        const angle = TWO_PI / periodsCount * percentage;
         periodRays.push({
             angle,
             radius,

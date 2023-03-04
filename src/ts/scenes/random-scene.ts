@@ -56,6 +56,9 @@ class RandomScene extends Scene {
             case EGearShape.OFF_PENTAGON:
                 polarCurve = PolarCurves.buildOffPolygon(size, 5, 0.6);
                 break;
+            case EGearShape.CIRCLE:
+                polarCurve = PolarCurves.buildCircle(size);
+                break;
             case EGearShape.RANDOM:
                 polarCurve = PolarCurves.buildRandom(size);
                 break;

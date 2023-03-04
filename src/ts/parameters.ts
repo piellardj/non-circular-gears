@@ -17,6 +17,7 @@ enum EGearShape {
     OFF_SQUARE = "off-square",
     PENTAGON = "pentagon",
     OFF_PENTAGON = "off-pentagon",
+    CIRCLE = "circle",
     RANDOM = "random",
 }
 
