@@ -73,6 +73,12 @@ abstract class Parameters {
     public static onReset: VoidFunction[] = [];
 }
 
+function updateTeethSizeControls(): void {
+    Page.Controls.setVisibility(controlId.TEETH_SIZE_TABS_ID, Parameters.showTeeth);
+}
+Page.Checkbox.addObserver(controlId.SHOW_TEETH_CHECKBOX_ID, updateTeethSizeControls);
+updateTeethSizeControls();
+
 export {
     EGearShape,
     ETeethSize,

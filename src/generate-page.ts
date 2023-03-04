@@ -97,7 +97,7 @@ const data = {
                 {
                     type: Demopage.supportedControls.Button,
                     id: "random-button",
-                    label: "Random",
+                    label: "Randomize",
                 },
             ]
         },
