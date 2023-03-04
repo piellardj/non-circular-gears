@@ -1,7 +1,10 @@
 /// <reference types="./page-interface-generated" />
 
+import { downloadTextFile } from "./utils";
+
 class SvgCanvas {
     private readonly svg: SVGSVGElement;
+    private readonly backgroundElement: SVGElement;
     private readonly canvasContainer: HTMLElement;
 
     public constructor() {
@@ -12,6 +15,14 @@ class SvgCanvas {
         this.svg.style.width = "100%";
         this.svg.style.height = "100%";
         this.svg.style.pointerEvents = "none";
+
+        this.backgroundElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        this.backgroundElement.setAttribute("x", "-100%");
+        this.backgroundElement.setAttribute("y", "-100%");
+        this.backgroundElement.setAttribute("width", "200%");
+        this.backgroundElement.setAttribute("height", "200%");
+        this.backgroundElement.setAttribute("fill", "black");
+        this.svg.appendChild(this.backgroundElement);
 
         const adjustAspectRatio = (): void => {
             const width = this.width;
@@ -31,6 +42,7 @@ class SvgCanvas {
             this.svg.removeChild(child);
             child = this.svg.firstChild;
         }
+        this.svg.appendChild(this.backgroundElement);
     }
 
     public removeChild(child: SVGElement): void {
@@ -39,6 +51,16 @@ class SvgCanvas {
 
     public addChild(element: SVGElement): void {
         this.svg.appendChild(element);
+    }
+
+    public download(): void {
+        this.svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        this.svg.setAttribute("version", "1.1");
+        const content = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n${this.svg.outerHTML}`;
+        this.svg.removeAttribute("xmlns");
+        this.svg.removeAttribute("version");
+
+        downloadTextFile("gears.svg", content);
     }
 
     public get width(): number {

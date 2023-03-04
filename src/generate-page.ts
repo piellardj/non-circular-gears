@@ -28,15 +28,6 @@ const data = {
             title: "Engine",
             controls: [
                 {
-                    type: Demopage.supportedControls.Range,
-                    title: "Rotation speed",
-                    id: "rotation-speed-range-id",
-                    min: -1,
-                    max: 1,
-                    value: 0.3,
-                    step: 0.05,
-                },
-                {
                     type: Demopage.supportedControls.Select,
                     title: "Central gear",
                     id: "central-gear-select-id",
@@ -90,6 +81,15 @@ const data = {
                     ]
                 },
                 {
+                    type: Demopage.supportedControls.Range,
+                    title: "Rotation speed",
+                    id: "rotation-speed-range-id",
+                    min: -1,
+                    max: 1,
+                    value: 0.3,
+                    step: 0.05,
+                },
+                {
                     type: Demopage.supportedControls.Button,
                     id: "reset-button",
                     label: "Reset",
@@ -129,6 +129,11 @@ const data = {
                             value: "large",
                         },
                     ]
+                },
+                {
+                    type: Demopage.supportedControls.Button,
+                    id: "download-button",
+                    label: "Download",
                 },
             ]
         }

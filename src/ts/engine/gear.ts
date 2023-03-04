@@ -375,7 +375,7 @@ class Gear {
         let i = 0;
         for (const surfaceFragment of this.walkOnPeriod(stepSize)) {
             const cos = Math.cos(i * TWO_PI / toothSize - Math.PI / 2);
-            const teethOffset = idealToothSize / 10 * this.orientation * Math.sign(cos) * Math.pow(Math.abs(cos), 1 / 5);
+            const teethOffset = idealToothSize / 7 * this.orientation * Math.sign(cos) * Math.pow(Math.abs(cos), 1 / 5);
 
             points.push({
                 x: surfaceFragment.point.x + teethOffset * surfaceFragment.normal.x,

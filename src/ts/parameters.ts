@@ -1,12 +1,13 @@
 /// <reference types="./page-interface-generated" />
 
 const controlId = {
-    ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     CENTRAL_GEAR_SELECT_ID: "central-gear-select-id",
+    ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
     SHOW_TEETH_CHECKBOX_ID: "show-teeth-checkbox-id",
     TEETH_SIZE_TABS_ID: "teeth-size-tabs-id",
+    DOWNLOAD_BUTTON_ID: "download-button",
 };
 
 enum EGearShape {
@@ -43,6 +44,10 @@ Page.Button.addObserver(controlId.RESET_BUTTON_ID, () => {
     callCallbacks(Parameters.onReset);
 });
 
+Page.Button.addObserver(controlId.DOWNLOAD_BUTTON_ID, () => {
+    callCallbacks(Parameters.onDownload);
+});
+
 Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
     const gearShapes = Object.values(EGearShape);
     const shapeId = Math.floor(Math.random() * gearShapes.length);
@@ -71,6 +76,8 @@ abstract class Parameters {
     public static onGearShapeChange: VoidFunction[] = [];
 
     public static onReset: VoidFunction[] = [];
+
+    public static onDownload: VoidFunction[] = [];
 }
 
 function updateTeethSizeControls(): void {

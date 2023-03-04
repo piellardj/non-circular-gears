@@ -19,6 +19,7 @@ function main(): void {
     }
     Parameters.onGearShapeChange.push(resetScene);
     Parameters.onReset.push(resetScene);
+    Parameters.onDownload.push(() => svgCanvas.download());
 
     let lastUpdate = performance.now();
     function mainLoop(): void {
