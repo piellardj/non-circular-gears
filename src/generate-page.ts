@@ -39,46 +39,35 @@ const data = {
                             checked: true,
                         },
                         {
-                            label: "Off-circle",
-                            value: "off-circle",
-                        },
-                        {
                             label: "Heart",
                             value: "heart",
-                        },
-                        {
-                            label: "Square",
-                            value: "square",
                         },
                         {
                             label: "Triangle",
                             value: "triangle",
                         },
                         {
-                            label: "Off-Triangle",
-                            value: "off-triangle",
-                        },
-                        {
-                            label: "Off-Square",
-                            value: "off-square",
+                            label: "Square",
+                            value: "square",
                         },
                         {
                             label: "Pentagon",
                             value: "pentagon",
                         },
                         {
-                            label: "Off-Pentagon",
-                            value: "off-pentagon",
+                            label: "Random",
+                            value: "random",
                         },
                         {
                             label: "Circle",
                             value: "circle",
                         },
-                        {
-                            label: "Random",
-                            value: "random",
-                        },
                     ]
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Shift center",
+                    id: "shift-center-checkbox-id",
                 },
                 {
                     type: Demopage.supportedControls.Range,
@@ -108,6 +97,7 @@ const data = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Show teeth",
                     id: "show-teeth-checkbox-id",
+                    checked: true,
                 },
                 {
                     type: Demopage.supportedControls.Tabs,

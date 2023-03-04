@@ -48,13 +48,13 @@ class RandomScene extends Scene {
                 polarCurve = PolarCurves.buildPolygon(size, 5);
                 break;
             case EGearShape.OFF_TRIANGLE:
-                polarCurve = PolarCurves.buildOffPolygon(size, 3, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 3, rand(0.3, 0.5));
                 break;
             case EGearShape.OFF_SQUARE:
-                polarCurve = PolarCurves.buildOffPolygon(size, 4, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 4, rand(0.3, 0.5));
                 break;
             case EGearShape.OFF_PENTAGON:
-                polarCurve = PolarCurves.buildOffPolygon(size, 5, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 5, rand(0.3, 0.5));
                 break;
             case EGearShape.CIRCLE:
                 polarCurve = PolarCurves.buildCircle(size);

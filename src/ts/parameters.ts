@@ -2,6 +2,7 @@
 
 const controlId = {
     CENTRAL_GEAR_SELECT_ID: "central-gear-select-id",
+    SHIFT_CENTER_CHECKBOX_ID: "shift-center-checkbox-id",
     ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
@@ -12,16 +13,16 @@ const controlId = {
 
 enum EGearShape {
     ELLIPSE = "ellipse",
-    OFF_CIRCLE = "off-circle",
     HEART = "heart",
     TRIANGLE = "triangle",
-    OFF_TRIANGLE = "off-triangle",
     SQUARE = "square",
-    OFF_SQUARE = "off-square",
     PENTAGON = "pentagon",
-    OFF_PENTAGON = "off-pentagon",
-    CIRCLE = "circle",
     RANDOM = "random",
+    CIRCLE = "circle",
+    OFF_CIRCLE = "off-circle",
+    OFF_TRIANGLE = "off-triangle",
+    OFF_SQUARE = "off-square",
+    OFF_PENTAGON = "off-pentagon",
 }
 
 enum ETeethSize {
@@ -37,6 +38,9 @@ function callCallbacks(callbacks: VoidFunction[]): void {
 }
 
 Page.Select.addObserver(controlId.CENTRAL_GEAR_SELECT_ID, () => {
+    callCallbacks(Parameters.onGearShapeChange);
+});
+Page.Checkbox.addObserver(controlId.SHIFT_CENTER_CHECKBOX_ID, () => {
     callCallbacks(Parameters.onGearShapeChange);
 });
 
@@ -62,7 +66,19 @@ abstract class Parameters {
     }
 
     public static get gearShape(): EGearShape {
-        return Page.Select.getValue(controlId.CENTRAL_GEAR_SELECT_ID) as EGearShape;
+        const gearShape = Page.Select.getValue(controlId.CENTRAL_GEAR_SELECT_ID) as EGearShape;
+        if (Parameters.shiftCenter) {
+            if (gearShape === EGearShape.CIRCLE) {
+                return EGearShape.OFF_CIRCLE;
+            } else if (gearShape === EGearShape.TRIANGLE) {
+                return EGearShape.OFF_TRIANGLE;
+            } else if (gearShape === EGearShape.SQUARE) {
+                return EGearShape.OFF_SQUARE;
+            } else if (gearShape === EGearShape.PENTAGON) {
+                return EGearShape.OFF_PENTAGON;
+            }
+        }
+        return gearShape;
     }
 
     public static get showTeeth(): boolean {
@@ -71,6 +87,10 @@ abstract class Parameters {
 
     public static get teethSize(): ETeethSize {
         return Page.Tabs.getValues(controlId.TEETH_SIZE_TABS_ID)[0] as ETeethSize;
+    }
+
+    private static get shiftCenter(): boolean {
+        return Page.Checkbox.isChecked(controlId.SHIFT_CENTER_CHECKBOX_ID);
     }
 
     public static onGearShapeChange: VoidFunction[] = [];
@@ -85,6 +105,14 @@ function updateTeethSizeControls(): void {
 }
 Page.Checkbox.addObserver(controlId.SHOW_TEETH_CHECKBOX_ID, updateTeethSizeControls);
 updateTeethSizeControls();
+
+function updateShiftCenterControl(): void {
+    const gearShape = Page.Select.getValue(controlId.CENTRAL_GEAR_SELECT_ID) as EGearShape;
+    const visible = [EGearShape.CIRCLE, EGearShape.TRIANGLE, EGearShape.SQUARE, EGearShape.PENTAGON].includes(gearShape);
+    Page.Controls.setVisibility(controlId.SHIFT_CENTER_CHECKBOX_ID, visible);
+}
+Page.Select.addObserver(controlId.CENTRAL_GEAR_SELECT_ID, updateShiftCenterControl);
+updateShiftCenterControl();
 
 export {
     EGearShape,
