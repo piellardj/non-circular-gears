@@ -112,11 +112,11 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
         const percentage = i / raysCount;
         const angle = TWO_PI * percentage;
 
-        const radius = getRadiusForCircle(circleEquation, angle, ERadiusChoice.FURTHEST);
-        if (isNaN(radius)) {
+        const localRadius = getRadiusForCircle(circleEquation, angle, ERadiusChoice.FURTHEST);
+        if (isNaN(localRadius)) {
             throw new Error();
         }
-        periodRays.push({ angle, radius });
+        periodRays.push({ angle, radius: localRadius });
     }
 
     return {
@@ -350,7 +350,7 @@ function buildRandom(size: number): PolarCurve {
             radius: size + range * noise,
         });
     }
-    vnoise
+
     return {
         periodRays,
         periodsCount,

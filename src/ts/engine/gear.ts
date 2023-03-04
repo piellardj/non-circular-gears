@@ -60,7 +60,7 @@ svgStyleElement.innerHTML = `.gear {
 }
 .gear-axis {
     fill: green;
-}`
+}`;
 class Gear {
     public static readonly centerRadius = 0.015;
     public static readonly svgStyleElement = svgStyleElement;
@@ -350,7 +350,7 @@ class Gear {
             return {
                 x: segment.startingRay.radius * Math.cos(segment.startingRay.angle),
                 y: segment.startingRay.radius * Math.sin(segment.startingRay.angle),
-            }
+            };
         });
         return points;
     }
