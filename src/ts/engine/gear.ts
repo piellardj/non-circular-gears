@@ -1,6 +1,7 @@
 import { normalizeAngle, toDegrees, TWO_PI } from "./angle-utils";
-import { PolarCurve } from "./polar-curves";
-import { computeDeltaAngle, computeDistance, Ray, ReadonlyRay } from "./rays";
+import type { Point } from "./point";
+import type { PolarCurve } from "./polar-curves";
+import { computeDeltaAngle, computeDistance, type Ray, type ReadonlyRay } from "./rays";
 
 type ReadonlyPoint = {
     readonly x: number;
@@ -289,16 +290,33 @@ class Gear {
         throw new Error();
     }
 
-    private *iterateOnRays(): Generator<Ray> {
+    private buildPeriodPointsSmooth(): Point[] {
+        const points = this.periodSegments.map(segment => {
+            return {
+                x: segment.startingRay.radius * Math.cos(segment.startingRay.angle),
+                y: segment.startingRay.radius * Math.sin(segment.startingRay.angle),
+            }
+        });
+        return points;
+    }
+
+    private buildSvgPath(pointsForPeriod: Point[]): string {
+        const pathParts = ["M"];
+
         for (let iP = 0; iP < this.periodsCount; iP++) {
             const periodStartingAngle = this.orientation * iP * this.periodAngle;
-            for (const periodSegment of this.periodSegments) {
-                yield {
-                    angle: normalizeAngle(periodStartingAngle + periodSegment.startingRay.angle),
-                    radius: periodSegment.startingRay.radius,
-                };
+            const cos = Math.cos(periodStartingAngle);
+            const sin = Math.sin(periodStartingAngle);
+
+            for (const point of pointsForPeriod) {
+                const x = cos * point.x - sin * point.y;
+                const y = sin * point.x + cos * point.y;
+                pathParts.push(`${x} ${y}`);
             }
         }
+
+        pathParts.push("Z");
+        return pathParts.join(" ");
     }
 
     private buildSvgRepresentation(): SvgRepresentation {
@@ -311,16 +329,11 @@ class Gear {
 
         // body
         {
-            const pathParts = ["M"];
-            for (const ray of this.iterateOnRays()) {
-                const x = ray.radius * Math.cos(ray.angle);
-                const y = ray.radius * Math.sin(ray.angle);
-                pathParts.push(`${x} ${y}`);
-            }
-            pathParts.push("Z");
-
             const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            gearElement.setAttribute("d", pathParts.join(" "));
+
+            const periodPoints = this.buildPeriodPointsSmooth();
+            const path = this.buildSvgPath(periodPoints);
+            gearElement.setAttribute("d", path);
             gearElement.setAttribute("class", this.parent ? "gear" : "gear main");
             rotationElement.appendChild(gearElement);
         }
