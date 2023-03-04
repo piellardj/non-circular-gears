@@ -125,6 +125,7 @@ class Gear {
     public readonly svgElement: SVGElement;
     private readonly svgRotationElement: SVGElement;
     private readonly periodSegments: Segment[];
+    private readonly periodSegmentsReverse: ReadonlyArray<Segment>;
     private readonly periodAngle: number;
     private readonly periodSurface: number;
     public readonly minRadius: number;
@@ -179,6 +180,8 @@ class Gear {
             this.periodSurface += segment.deltaDistance;
         }
 
+        this.periodSegmentsReverse = this.periodSegments.slice().reverse();
+
         const svgRepresentation = this.buildSvgRepresentation();
         this.svgElement = svgRepresentation.container;
         this.svgRotationElement = svgRepresentation.rotationElement;
@@ -226,7 +229,8 @@ class Gear {
         let cumulatedAngle = this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.periodSegments) {
+        const periodSegments = (this.orientation > 0) ? this.periodSegmentsReverse : this.periodSegments;
+        for (const segment of periodSegments) {
             const nextCumulatedAngle = cumulatedAngle + segment.deltaAngle;
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
@@ -249,7 +253,8 @@ class Gear {
         this.rotation = -this.periodAngle * nbPeriods;
         let cumulatedSurface = this.periodSurface * nbPeriods;
 
-        for (const segment of this.periodSegments) {
+        const periodSegments = (this.orientation < 0) ? this.periodSegmentsReverse : this.periodSegments;
+        for (const segment of periodSegments) {
             const nextCumulatedSurface = cumulatedSurface + segment.deltaDistance;
 
             if (nextCumulatedSurface >= targetSurface) {
