@@ -25,7 +25,7 @@ type CircleEquation = {
 };
 
 enum ERadiusChoice {
-    CLOSEST,
+    NEAREST,
     FURTHEST,
 }
 
@@ -36,7 +36,7 @@ function getRadiusForCircle(circleEquation: CircleEquation, angle: number, choic
     const det = a * a - 4 * b;
     if (det >= 0) {
         const sqrtDet = Math.sqrt(det);
-        if (choice === ERadiusChoice.CLOSEST) {
+        if (choice === ERadiusChoice.NEAREST) {
             return 0.5 * (-sqrtDet - a);
         } else {
             return 0.5 * (sqrtDet - a);
@@ -127,38 +127,82 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
 
 function buildHeart(size: number): PolarCurve {
     const periodsCount = 1;
-    const raysCount = 60;
+    const raysCount = 90;
 
-    const rotation = Math.PI;
+    const lineEquations: LineEquation[] = [];
+    lineEquations.push({ a: 1, b: 1, c: -1 });
+    lineEquations.push({ a: -1, b: 1, c: 1 });
+    lineEquations.push({ a: 1, b: 0, c: 5 });
+
+    const bottomCircleRadius = 0.2;
+    const bottomCircleEquation: CircleEquation = {
+        center: { x: -1 + bottomCircleRadius * Math.SQRT2, y: 0 },
+        radius: bottomCircleRadius,
+    };
+
+    const lobesRadius = 0.6;
+    const lobesX = lobesRadius * Math.SQRT2 - 0.45;
+    const lobesY = 0.95 * lobesRadius;
+    const lobesSidesX = lobesX - lobesRadius * Math.SQRT2 + 0.4;
+    const lobeCirclesEquations: CircleEquation[] = [
+        { center: { x: lobesX, y: lobesY }, radius: lobesRadius },
+        { center: { x: lobesX, y: -lobesY }, radius: lobesRadius },
+    ];
+
+    const lobesCentralEquation: CircleEquation = {
+        center: { x: 1, y: 0 },
+        radius: 0.2,
+    };
+
+    const rotation = 0;//3 * Math.PI / 4;
     const periodRays: Ray[] = [];
     for (let i = 0; i < raysCount; i++) {
         const percentage = i / raysCount;
-        const angle = normalizeAngle(TWO_PI * percentage + rotation);
+        const angle = normalizeAngle(TWO_PI * percentage);
 
-        let radius: number;
-        if (angle < Math.PI) {
-            const x = 3.3030615433;
-            const y = 2.6969384567;
-            const circleRadius = Math.sqrt(14.5469540784);
-
-            let radiuses: number[];
-            if (angle < Math.PI / 2) {
-                radiuses = getRadiusesForCircle({ center: { x, y }, radius: circleRadius }, angle);
-            } else {
-                radiuses = getRadiusesForCircle({ center: { x: -x, y }, radius: circleRadius }, angle);
+        let radius = 1000000;
+        for (const lineEquation of lineEquations) {
+            const localRadius = getRadiusForLine(lineEquation, angle);
+            if (!isNaN(localRadius) && localRadius > 0) {
+                radius = Math.min(localRadius, radius);
             }
-            radius = Math.max(radiuses[0]!, radiuses[1]!);
-        } else {
-            if (angle < 3 * Math.PI / 2) {
-                radius = getRadiusForLine({ a: +1, b: 1, c: -6 }, angle);
-            } else {
-                radius = getRadiusForLine({ a: -1, b: 1, c: -6 }, angle);
+        }
+
+        {
+            const localRadius = getRadiusForCircle(bottomCircleEquation, angle, ERadiusChoice.FURTHEST);
+            if (!isNaN(localRadius) && localRadius > 0) {
+                const pointX = localRadius * Math.cos(angle);
+                if (pointX < 0.5 * (bottomCircleEquation.center.x - 1)) {
+                    radius = Math.min(localRadius, radius);
+                }
+            }
+        }
+
+        {
+            for (const lobeCircleEquation of lobeCirclesEquations) {
+                const localRadius = getRadiusForCircle(lobeCircleEquation, angle, ERadiusChoice.FURTHEST);
+                if (!isNaN(localRadius) && localRadius > 0) {
+                    const point = { x: localRadius * Math.cos(angle), y: localRadius * Math.sin(angle) };
+                    if (point.y * lobeCircleEquation.center.y >= 0 && point.x > lobesSidesX) {
+                        radius = Math.min(localRadius, radius);
+                    }
+                }
+            }
+        }
+
+        {
+            const localRadius = getRadiusForCircle(lobesCentralEquation, angle, ERadiusChoice.NEAREST);
+            if (!isNaN(localRadius) && localRadius > 0) {
+                const pointX = localRadius * Math.cos(angle);
+                if (pointX < 1) {
+                    radius = Math.max(localRadius, radius);
+                }
             }
         }
 
         periodRays.push({
             angle: normalizeAngle(angle - rotation),
-            radius: radius * size,
+            radius: radius * size * 7,
         });
     }
 
