@@ -24,19 +24,26 @@ type CircleEquation = {
     radius: number;
 };
 
-function getRadiusesForCircle(circleEquation: CircleEquation, angle: number): number[] {
-    const result: number[] = [];
+enum ERadiusChoice {
+    CLOSEST,
+    FURTHEST,
+}
 
+function getRadiusForCircle(circleEquation: CircleEquation, angle: number, choice: ERadiusChoice): number {
     const a = -2 * (circleEquation.center.x * Math.cos(angle) + circleEquation.center.y * Math.sin(angle));
     const b = circleEquation.center.x * circleEquation.center.x + circleEquation.center.y * circleEquation.center.y - circleEquation.radius * circleEquation.radius;
 
     const det = a * a - 4 * b;
     if (det >= 0) {
         const sqrtDet = Math.sqrt(det);
-        result.push(0.5 * (sqrtDet - a));
-        result.push(0.5 * (-sqrtDet - a));
+        if (choice === ERadiusChoice.CLOSEST) {
+            return 0.5 * (-sqrtDet - a);
+        } else {
+            return 0.5 * (sqrtDet - a);
+        }
+
     }
-    return result;
+    return NaN;
 }
 
 function getLineEquation(p1: Point, p2: Point): LineEquation {
@@ -49,7 +56,7 @@ function getLineEquation(p1: Point, p2: Point): LineEquation {
 function getRadiusForLine(line: LineEquation, angle: number): number {
     const det = line.a * Math.cos(angle) + line.b * Math.sin(angle);
     if (det === 0) {
-        throw new Error();
+        return NaN;
     }
     return line.c / det;
 }
@@ -105,14 +112,11 @@ function buildOffCircle(radius: number, centerOffset: number): PolarCurve {
         const percentage = i / raysCount;
         const angle = TWO_PI * percentage;
 
-        const radiuses = getRadiusesForCircle(circleEquation, angle);
-        if (radiuses.length !== 2) {
+        const radius = getRadiusForCircle(circleEquation, angle, ERadiusChoice.FURTHEST);
+        if (isNaN(radius)) {
             throw new Error();
         }
-        periodRays.push({
-            angle,
-            radius: Math.max(radiuses[0]!, radiuses[1]!),
-        });
+        periodRays.push({ angle, radius });
     }
 
     return {
@@ -196,16 +200,10 @@ function buildPolygon(size: number, sides: number): PolarCurve {
     for (let i = 0; i < raysCount; i++) {
         const angle = i / raysCount * periodAngle;
 
-        let radius = getRadiusForLine(lineEquation, angle)
+        let radius = getRadiusForLine(lineEquation, angle);
         for (const circle of circles) {
-            const circleRadiuses = getRadiusesForCircle(circle, angle);
-            if (circleRadiuses.length === 1) {
-                const circleRadius = circleRadiuses[0]!;
-                if (isCircleRadiusValid(circle, angle, circleRadius)) {
-                    radius = Math.min(circleRadius, circleRadius);
-                }
-            } else if (circleRadiuses.length === 2) {
-                const circleRadius = Math.max(circleRadiuses[0]!, circleRadiuses[1]!);
+            const circleRadius = getRadiusForCircle(circle, angle, ERadiusChoice.FURTHEST);
+            if (!isNaN(circleRadius)) {
                 if (isCircleRadiusValid(circle, angle, circleRadius)) {
                     radius = Math.min(circleRadius, circleRadius);
                 }
@@ -272,14 +270,8 @@ function buildOffPolygon(size: number, sides: number, offset: number): PolarCurv
         }
 
         for (const circle of circles) {
-            const circleRadiuses = getRadiusesForCircle(circle, angle);
-            if (circleRadiuses.length === 1) {
-                const circleRadius = circleRadiuses[0]!;
-                if (circleRadius > 0 && isCircleRadiusValid(circle, angle, circleRadius)) {
-                    minRadius = Math.min(circleRadius, circleRadius);
-                }
-            } else if (circleRadiuses.length === 2) {
-                const circleRadius = Math.max(circleRadiuses[0]!, circleRadiuses[1]!);
+            const circleRadius = getRadiusForCircle(circle, angle, ERadiusChoice.FURTHEST);
+            if (!isNaN(circleRadius)) {
                 if (circleRadius > 0 && isCircleRadiusValid(circle, angle, circleRadius)) {
                     minRadius = Math.min(circleRadius, circleRadius);
                 }
