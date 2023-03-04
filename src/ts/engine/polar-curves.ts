@@ -154,7 +154,7 @@ function buildHeart(size: number): PolarCurve {
         radius: 0.2,
     };
 
-    const rotation = 0;//3 * Math.PI / 4;
+    const rotation = Math.PI / 2;
     const periodRays: Ray[] = [];
     for (let i = 0; i < raysCount; i++) {
         const percentage = i / raysCount;
@@ -205,6 +205,8 @@ function buildHeart(size: number): PolarCurve {
             radius: radius * size * 7,
         });
     }
+
+    periodRays.sort((ray1: Ray, ray2: Ray) => ray1.angle - ray2.angle);
 
     return {
         periodRays,
