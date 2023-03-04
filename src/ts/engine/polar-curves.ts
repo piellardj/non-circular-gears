@@ -2,6 +2,11 @@ import { angleDifference, normalizeAngle, toRadians, TWO_PI } from "./angle-util
 import { Point } from "./point";
 import { Ray } from "./rays";
 
+declare const vnoise: {
+    seed: number,
+    fractal2d: (x: number, y: number, octave: number) => number; // returns something in [-2,+2]
+}; // from js-value-noise
+
 type PolarCurve = {
     periodRays: Ray[];
     periodsCount: number;
@@ -290,6 +295,30 @@ function buildOffPolygon(size: number, sides: number, offset: number): PolarCurv
     };
 }
 
+function buildRandom(size: number): PolarCurve {
+    const periodsCount = 1;
+    const raysCount = 90;
+
+    const range = size * 1.5;
+
+    vnoise.seed = Math.random();
+
+    const periodRays: Ray[] = [];
+    for (let i = 0; i < raysCount; i++) {
+        const angle = TWO_PI * i / raysCount;
+        const noise = vnoise.fractal2d(Math.cos(angle), Math.sin(angle), 2) * 0.25; // in [-0.5,+0.5]
+        periodRays.push({
+            angle,
+            radius: size + range * noise,
+        });
+    }
+    vnoise
+    return {
+        periodRays,
+        periodsCount,
+    };
+}
+
 export type {
     PolarCurve,
 };
@@ -300,5 +329,6 @@ export {
     buildOffCircle,
     buildOffPolygon,
     buildPolygon,
+    buildRandom,
 };
 

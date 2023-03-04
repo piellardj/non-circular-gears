@@ -17,6 +17,7 @@ enum EGearShape {
     OFF_SQUARE = "off-square",
     PENTAGON = "pentagon",
     OFF_PENTAGON = "off-pentagon",
+    RANDOM = "random",
 }
 
 function callCallbacks(callbacks: VoidFunction[]): void {

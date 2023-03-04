@@ -1,5 +1,6 @@
 import { Gear } from "../engine/gear";
-import { buildEllipse, buildHeart, buildOffCircle, buildOffPolygon, buildPolygon, PolarCurve } from "../engine/polar-curves";
+import type { PolarCurve } from "../engine/polar-curves";
+import * as PolarCurves from "../engine/polar-curves";
 import { EGearShape } from "../parameters";
 import { SvgCanvas } from "../svg-canvas";
 import { distance } from "../utils";
@@ -29,31 +30,34 @@ class RandomScene extends Scene {
         let polarCurve: PolarCurve;
         switch (centralGear) {
             case EGearShape.ELLIPSE:
-                polarCurve = buildEllipse(size, rand(0.2, 0.6) * size);
+                polarCurve = PolarCurves.buildEllipse(size, rand(0.2, 0.6) * size);
                 break;
             case EGearShape.HEART:
-                polarCurve = buildHeart(0.17 * size);
+                polarCurve = PolarCurves.buildHeart(0.17 * size);
                 break;
             case EGearShape.OFF_CIRCLE:
-                polarCurve = buildOffCircle(size, rand(0.3, 0.9) * size);
+                polarCurve = PolarCurves.buildOffCircle(size, rand(0.3, 0.9) * size);
                 break;
             case EGearShape.TRIANGLE:
-                polarCurve = buildPolygon(size, 3);
+                polarCurve = PolarCurves.buildPolygon(size, 3);
                 break;
             case EGearShape.SQUARE:
-                polarCurve = buildPolygon(size, 4);
+                polarCurve = PolarCurves.buildPolygon(size, 4);
                 break;
             case EGearShape.PENTAGON:
-                polarCurve = buildPolygon(size, 5);
+                polarCurve = PolarCurves.buildPolygon(size, 5);
                 break;
             case EGearShape.OFF_TRIANGLE:
-                polarCurve = buildOffPolygon(size, 3, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 3, 0.6);
                 break;
             case EGearShape.OFF_SQUARE:
-                polarCurve = buildOffPolygon(size, 4, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 4, 0.6);
                 break;
             case EGearShape.OFF_PENTAGON:
-                polarCurve = buildOffPolygon(size, 5, 0.6);
+                polarCurve = PolarCurves.buildOffPolygon(size, 5, 0.6);
+                break;
+            case EGearShape.RANDOM:
+                polarCurve = PolarCurves.buildRandom(size);
                 break;
             default:
                 throw new Error(centralGear);

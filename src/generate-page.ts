@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as fse from "fs-extra";
 import * as path from "path";
 import { Demopage } from "webpage-templates";
 
@@ -13,6 +14,7 @@ const data = {
     additionalLinks: [],
     styleFiles: [],
     scriptFiles: [
+        "script/jsvaluenoise.min.js",
         "script/main.js"
     ],
     indicators: [],
@@ -78,6 +80,10 @@ const data = {
                             label: "Off-Pentagon",
                             value: "off-pentagon",
                         },
+                        {
+                            label: "Random",
+                            value: "random",
+                        },
                     ]
                 },
                 {
@@ -108,3 +114,5 @@ buildResult.pageScriptDeclaration = "/* tslint:disable */\n" + buildResult.pageS
 
 const SCRIPT_DECLARATION_FILEPATH = path.join(SRC_DIR, "ts", "page-interface-generated.d.ts");
 fs.writeFileSync(SCRIPT_DECLARATION_FILEPATH, buildResult.pageScriptDeclaration);
+
+fse.copySync(path.resolve(SRC_DIR, "static"), DEST_DIR);
