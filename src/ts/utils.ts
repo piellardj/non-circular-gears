@@ -24,7 +24,7 @@ function downloadTextFile(fileName: string, content: string): void {
         const linkElement = document.createElement('a');
         linkElement.download = fileName;
         linkElement.href = objectUrl;
-        linkElement.dataset.downloadurl = `${fileType}:${linkElement.download}:${linkElement.href}`;
+        linkElement.dataset["downloadurl"] = `${fileType}:${linkElement.download}:${linkElement.href}`;
         linkElement.style.display = "none";
         document.body.appendChild(linkElement);
         linkElement.click();

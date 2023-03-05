@@ -1,3 +1,5 @@
+/// <reference types="../page-interface-generated" />
+
 import { ESurfaceType, Gear } from "../engine/gear";
 import { Point } from "../engine/point";
 import { ETeethSize, Parameters } from "../parameters";
