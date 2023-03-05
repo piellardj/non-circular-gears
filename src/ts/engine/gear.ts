@@ -423,7 +423,7 @@ class Gear {
 
         // rays
         {
-            const length = Math.min(firstPeriodSegment.startingRay.radius, 0.05);
+            const length = Math.min(0.75 * firstPeriodSegment.startingRay.radius, 0.05);
 
             const pathParts: string[] = [];
             for (let i = 0; i < this.periodsCount; i++) {
