@@ -30,7 +30,7 @@ class RandomScene extends Scene {
         let polarCurve: PolarCurve;
         switch (centralGear) {
             case EGearShape.ELLIPSE:
-                polarCurve = PolarCurves.buildEllipse(size, rand(0.2, 0.6) * size);
+                polarCurve = PolarCurves.buildEllipse(size, rand(0.4, 0.7) * size);
                 break;
             case EGearShape.HEART:
                 polarCurve = PolarCurves.buildHeart(0.17 * size);
