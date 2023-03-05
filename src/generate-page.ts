@@ -16,7 +16,7 @@ const data = {
     styleFiles: [],
     scriptFiles: [
         "script/jsvaluenoise.min.js",
-        "script/main.js"
+        "script/main.min.js"
     ],
     indicators: [],
     canvas: {

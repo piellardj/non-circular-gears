@@ -51,6 +51,6 @@ function buildConfig(entryFilename /* string */, outputFilename /* string */, mi
 }
 
 module.exports = [
-    buildConfig("main.ts", "main.js", false),
-    // buildConfig("main.ts", "main.min.js", true),
+    // buildConfig("main.ts", "main.js", false),
+    buildConfig("main.ts", "main.min.js", true),
 ];
