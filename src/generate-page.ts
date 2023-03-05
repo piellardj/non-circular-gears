@@ -8,8 +8,8 @@ const data = {
     title: "Non-circular gears",
     description: "Non-circular gear generator",
     introduction: [
-        "Gears don't always have to be round. They can have countless shapes. Non-circular gears are designed to convert rotational speed in a nonconstant manner. They also look cool.",
-        "This project is a non-circular gear system generator: the central gear in orange has an unusual shape, and all the other gears in red are built to accomodate it. All of them have a fixed rotation axis in green. You can also add more gears with the left mouse button.",
+        "Gears are not always round. Non-circular gears were sketched by Leonardo da Vinci back in the 15th century. Such gears are designed to convert rotational speed in a nonconstant manner. They also look cool.",
+        "This project is a non-circular gears system generator: the central gear in orange has an unusual shape, and all the other gears in red are built to accomodate it. All of them have a fixed rotation axis in green. You can also add more gears with the left mouse button.",
     ],
     githubProjectName: "non-circular-gears",
     additionalLinks: [],
