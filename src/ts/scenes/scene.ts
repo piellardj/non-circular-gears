@@ -31,11 +31,11 @@ abstract class Scene {
         this.svgCanvas = svgCanvas;
 
         const updateStyle = (): void => {
+            const flatStyle = (Parameters.displayStyle === EDisplayStyle.FLAT);
             const gearColor = "red";
             const gearMainColor = "#FF6A00";
+            const axisColor = flatStyle ? "#333333": "green";
 
-            const axisColor = "#333333";
-            const flatStyle = (Parameters.displayStyle === EDisplayStyle.FLAT);
             const newStyle = `.${Gear.gearClass} {
     fill:           ${gearColor};
     fill-opacity:   ${flatStyle ? 0.7 : 0.4};
