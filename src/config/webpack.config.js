@@ -9,7 +9,7 @@ function buildConfig(entryFilename /* string */, outputFilename /* string */, mi
         name: entryFilename,
         devtool: "source-map",
         mode: minified ? "production" : "development",
-        watch: true,
+        // watch: true,
         entry: path.join(INPUT_SCRIPT_DIR, entryFilename),
         output: {
             path: OUTPUT_SCRIPT_DIR,

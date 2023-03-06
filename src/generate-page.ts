@@ -95,6 +95,29 @@ const data = {
             title:"Display",
             controls: [
                 {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Style",
+                    id: "display-style-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            label: "Flat",
+                            value: "flat",
+                            checked: true,
+                        },
+                        {
+                            label: "Outline",
+                            value: "outline",
+                        },
+                    ]
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Show rays",
+                    id: "show-rays-checkbox-id",
+                    checked: true,
+                },
+                {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Show teeth",
                     id: "show-teeth-checkbox-id",

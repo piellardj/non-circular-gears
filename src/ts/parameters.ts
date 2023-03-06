@@ -6,6 +6,8 @@ const controlId = {
     ROTATION_SPEED_RANGE: "rotation-speed-range-id",
     RESET_BUTTON_ID: "reset-button",
     RANDOM_BUTTON_ID: "random-button",
+    DISPLAY_STYLE_TABS_ID: "display-style-tabs-id",
+    SHOW_RAYS_CHECKBOX_ID: "show-rays-checkbox-id",
     SHOW_TEETH_CHECKBOX_ID: "show-teeth-checkbox-id",
     TEETH_SIZE_TABS_ID: "teeth-size-tabs-id",
     DOWNLOAD_BUTTON_ID: "download-button",
@@ -23,6 +25,11 @@ enum EGearShape {
     OFF_TRIANGLE = "off-triangle",
     OFF_SQUARE = "off-square",
     OFF_PENTAGON = "off-pentagon",
+}
+
+enum EDisplayStyle {
+    FLAT = "flat",
+    OUTLINE = "outline",
 }
 
 enum ETeethSize {
@@ -60,6 +67,12 @@ Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
     callCallbacks(Parameters.onReset);
 });
 
+function onDisplayStyleChange(): void {
+    callCallbacks(Parameters.onDisplayStyleChange);
+}
+Page.Tabs.addObserver(controlId.DISPLAY_STYLE_TABS_ID, onDisplayStyleChange);
+Page.Checkbox.addObserver(controlId.SHOW_RAYS_CHECKBOX_ID, onDisplayStyleChange);
+
 abstract class Parameters {
     public static get rotationSpeed(): number {
         return Page.Range.getValue(controlId.ROTATION_SPEED_RANGE);
@@ -81,6 +94,13 @@ abstract class Parameters {
         return gearShape;
     }
 
+    public static get displayStyle(): EDisplayStyle {
+        return Page.Tabs.getValues(controlId.DISPLAY_STYLE_TABS_ID)[0] as EDisplayStyle;
+    }
+    public static get showRays(): boolean {
+        return Page.Checkbox.isChecked(controlId.SHOW_RAYS_CHECKBOX_ID);
+    }
+
     public static get showTeeth(): boolean {
         return Page.Checkbox.isChecked(controlId.SHOW_TEETH_CHECKBOX_ID);
     }
@@ -98,6 +118,8 @@ abstract class Parameters {
     public static onReset: VoidFunction[] = [];
 
     public static onDownload: VoidFunction[] = [];
+
+    public static onDisplayStyleChange: VoidFunction[] = [];
 }
 
 function updateTeethSizeControls(): void {
@@ -115,6 +137,7 @@ Page.Select.addObserver(controlId.CENTRAL_GEAR_SELECT_ID, updateShiftCenterContr
 updateShiftCenterControl();
 
 export {
+    EDisplayStyle,
     EGearShape,
     ETeethSize,
     Parameters,

@@ -44,27 +44,13 @@ type SvgRepresentation = {
     computedPaths: Record<number, string>;
 };
 
-const svgStyleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
-svgStyleElement.innerHTML = `.gear {
-    fill: red;
-    fill-opacity: 0.4;
-    stroke: red;
-    stroke-width: 0.004;
-}
-.gear.main {
-    fill: #FF6A00;
-    stroke: #FF6A00;
-}
-.gear-rays {
-    stroke: green;
-    stroke-width: 0.006;
-}
-.gear-axis {
-    fill: green;
-}`;
 class Gear {
     public static readonly centerRadius = 0.015;
-    public static readonly svgStyleElement = svgStyleElement;
+
+    public static readonly gearClass: string = "gear";
+    public static readonly gearMainClass: string = "main";
+    public static readonly gearRaysClass: string = "gear-rays";
+    public static readonly gearAxisClass: string = "gear-axis";
 
     public static create(center: ReadonlyPoint, polarCurve: PolarCurve): Gear {
         return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1);
@@ -413,7 +399,7 @@ class Gear {
         containerElement.appendChild(rotationElement);
 
         const gearElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        gearElement.setAttribute("class", this.parent ? "gear" : "gear main");
+        gearElement.setAttribute("class", this.parent ? Gear.gearClass : `${Gear.gearClass} ${Gear.gearMainClass}`);
         rotationElement.appendChild(gearElement);
 
         const firstPeriodSegment = this.periodSegments[0];
@@ -436,7 +422,7 @@ class Gear {
             }
             const raysElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
             raysElement.setAttribute("d", pathParts.join(""));
-            raysElement.setAttribute("class", "gear-rays");
+            raysElement.setAttribute("class", Gear.gearRaysClass);
             rotationElement.appendChild(raysElement);
         }
 
@@ -462,7 +448,7 @@ class Gear {
                 centerElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 centerElement.setAttribute("d", pathParts.join(""));
             }
-            centerElement.setAttribute("class", "gear-axis");
+            centerElement.setAttribute("class", Gear.gearAxisClass);
             rotationElement.appendChild(centerElement);
         }
 

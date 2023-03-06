@@ -2,7 +2,7 @@
 
 import { ESurfaceType, Gear } from "../engine/gear";
 import { Point } from "../engine/point";
-import { ETeethSize, Parameters } from "../parameters";
+import { EDisplayStyle, ETeethSize, Parameters } from "../parameters";
 import { SvgCanvas } from "../svg-canvas";
 import { distance } from "../utils";
 
@@ -29,7 +29,35 @@ abstract class Scene {
 
     protected constructor(svgCanvas: SvgCanvas, mainGear: Gear) {
         this.svgCanvas = svgCanvas;
-        this.svgCanvas.addChild(Gear.svgStyleElement);
+
+        const updateStyle = (): void => {
+            const gearColor = "red";
+            const gearMainColor = "#FF6A00";
+
+            const axisColor = "#333333";
+            const flatStyle = (Parameters.displayStyle === EDisplayStyle.FLAT);
+            const newStyle = `.${Gear.gearClass} {
+    fill:           ${gearColor};
+    fill-opacity:   ${flatStyle ? 0.7 : 0.4};
+    stroke:         ${gearColor};
+    stroke-width:   ${flatStyle ? 0 : 0.004};
+}
+.${Gear.gearClass}.${Gear.gearMainClass} {
+    fill:   ${gearMainColor};
+    stroke: ${gearMainColor};
+}
+.${Gear.gearRaysClass} {
+    ${Parameters.showRays ? "" : "display: none;"}
+    stroke:         ${axisColor};
+    stroke-width:   0.006;
+}
+.${Gear.gearAxisClass} {
+    fill: ${axisColor};
+}`;
+            this.svgCanvas.setStyle(newStyle);
+        };
+        Parameters.onDisplayStyleChange.push(updateStyle);
+        updateStyle();
 
         this.mainGear = mainGear;
 

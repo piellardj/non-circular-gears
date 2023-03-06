@@ -4,6 +4,7 @@ import { downloadTextFile } from "./utils";
 
 class SvgCanvas {
     private readonly svg: SVGSVGElement;
+    private readonly styleElement: SVGStyleElement;
     private readonly backgroundElement: SVGElement;
     private readonly canvasContainer: HTMLElement;
 
@@ -15,6 +16,9 @@ class SvgCanvas {
         this.svg.style.width = "100%";
         this.svg.style.height = "100%";
         this.svg.style.pointerEvents = "none";
+
+        this.styleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
+        this.svg.appendChild(this.styleElement);
 
         this.backgroundElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         this.backgroundElement.setAttribute("x", "-100%");
@@ -42,6 +46,7 @@ class SvgCanvas {
             this.svg.removeChild(child);
             child = this.svg.firstChild;
         }
+        this.svg.appendChild(this.styleElement);
         this.svg.appendChild(this.backgroundElement);
     }
 
@@ -61,6 +66,10 @@ class SvgCanvas {
         this.svg.removeAttribute("version");
 
         downloadTextFile("gears.svg", content);
+    }
+
+    public setStyle(style: string): void {
+        this.styleElement.innerHTML = style;
     }
 
     public get width(): number {
