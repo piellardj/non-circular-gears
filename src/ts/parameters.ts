@@ -64,6 +64,8 @@ Page.Button.addObserver(controlId.RANDOM_BUTTON_ID, () => {
     const shapeId = Math.floor(Math.random() * gearShapes.length);
     const gearShape = gearShapes[shapeId] as string;
     Page.Select.setValue(controlId.CENTRAL_GEAR_SELECT_ID, gearShape);
+    updateShiftCenterControl();
+    Page.Checkbox.setChecked(controlId.SHIFT_CENTER_CHECKBOX_ID, Math.random() > 0.5);
     callCallbacks(Parameters.onReset);
 });
 
