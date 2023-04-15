@@ -1,34 +1,35 @@
 {
-    "name": "non-circular-gears",
-    "homepage": "https://piellardj.github.io/non-circular-gears",
-    "scripts": {
-        "pre-commit": "npm run rebuild && npm run lint",
-        "http-server": "http-server ./docs -p 8080 -c-1",
-        "build-page": "ts-node-script src/generate-page.ts",
-        "build": "npm run build-page && npm run webpack",
-        "clean": "shx rm -rf docs/* **/*generated.*",
-        "lint": "eslint src/ts -c src/config/.eslintrc.json --ext .ts",
-        "rebuild": "npm run clean && npm run build",
-        "webpack": "webpack --config src/config/webpack.config.js"
-    },
-    "author": "Jérémie PIELLARD <jeremie.piellard@gmail.com> (https://github.com/piellardj)",
-    "repository": "github:piellardj/non-circular-gears",
-    "engines": {
-        "node": ">=18.14.0"
-    },
-    "devDependencies": {
-        "@types/fs-extra": "^11.0.1",
-        "@typescript-eslint/eslint-plugin": "^5.53.0",
-        "@typescript-eslint/parser": "^5.53.0",
-        "eslint": "^8.34.0",
-        "fs-extra": "^11.1.0",
-        "http-server": "^14.1.1",
-        "shx": "^0.3.4",
-        "ts-loader": "^9.4.2",
-        "ts-node": "^10.9.1",
-        "typescript": "^4.9.5",
-        "webpack": "^5.75.0",
-        "webpack-cli": "^5.0.1",
-        "webpage-templates": "github:piellardj/webpage-templates"
-    }
+  "name": "non-circular-gears",
+  "homepage": "https://piellardj.github.io/non-circular-gears",
+  "author": "Jérémie PIELLARD <jeremie.piellard@gmail.com> (https://github.com/piellardj)",
+  "repository": "github:piellardj/non-circular-gears",
+  "private": true,
+  "scripts": {
+    "pre-commit": "npm run rebuild && npm run lint",
+    "http-server": "http-server ./docs -p 8080 -c-1",
+    "build-page": "ts-node-script src/generate-page.ts",
+    "build": "npm run build-page && npm run webpack",
+    "clean": "shx rm -rf docs/* **/*generated.*",
+    "lint": "eslint src/ts -c src/config/.eslintrc.json --ext .ts",
+    "rebuild": "npm run clean && npm run build",
+    "webpack": "webpack --config src/config/webpack.config.js"
+  },
+  "engines": {
+    "node": ">=18.14.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
+    "eslint": "^8.34.0",
+    "fs-extra": "^11.1.0",
+    "http-server": "^14.1.1",
+    "shx": "^0.3.4",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpage-templates": "github:piellardj/webpage-templates"
+  }
 }
