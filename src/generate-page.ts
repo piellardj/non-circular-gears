@@ -12,6 +12,10 @@ const data = {
         "This project is a non-circular gears system generator: the central gear in orange has a certain shape, and all the other gears in red are built to accomodate it. All of them have a fixed rotation axis. You can manually add more gears with the left mouse button.",
     ],
     githubProjectName: "non-circular-gears",
+    readme: {
+        filepath: path.join(__dirname, "..", "README.md"),
+        branchName: "main"
+    },
     additionalLinks: [],
     styleFiles: [],
     scriptFiles: [
