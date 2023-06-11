@@ -5,6 +5,8 @@ This project is a non-circular gears system generator: the central gear in orang
 
 See it live [here](https://piellardj.github.io/non-circular-gears/).
 
+[![Donate](https://raw.githubusercontent.com/piellardj/piellardj.github.io/master/images/readme/donate-paypal.svg)](https://www.paypal.com/donate/?hosted_button_id=AF7H7GEJTL95E)
+
 ## Preview
 
 ![Illustration 1](src/readme/ellipse_teeth.png)
