@@ -26,7 +26,7 @@ abstract class Scene {
 
     private readonly onMouseMove: VoidFunction;
     private readonly onMouseUp: VoidFunction;
-    private readonly onMouseUpRight: (event: MouseEvent) => void;
+    private readonly onRightClick: () => void;
 
     private mobileGear: Gear | null = null;
 
@@ -89,21 +89,19 @@ abstract class Scene {
                 this.mobileGear = null;
             }
         };
-        this.onMouseUpRight = (event: MouseEvent) => {
-            if (event.button === 2) { // right button
-                const hoveredGear = this.getHoveredGear();
-                if (hoveredGear) {
-                    const newSecondaryGears: Gear[] = [];
-                    for (const gear of this.secondaryGears) {
-                        if (gear.isChildOf(hoveredGear)) {
-                            this.svgCanvas.removeChild(gear.svgElement);
-                        } else {
-                            newSecondaryGears.push(gear);
-                        }
+        this.onRightClick = () => {
+            const hoveredGear = this.getHoveredGear();
+            if (hoveredGear) {
+                const newSecondaryGears: Gear[] = [];
+                for (const gear of this.secondaryGears) {
+                    if (gear.isChildOf(hoveredGear)) {
+                        this.svgCanvas.removeChild(gear.svgElement);
+                    } else {
+                        newSecondaryGears.push(gear);
                     }
-                    this.secondaryGears = newSecondaryGears;
-                    this.onMouseMove();
                 }
+                this.secondaryGears = newSecondaryGears;
+                this.onMouseMove();
             }
         };
     }
@@ -125,7 +123,7 @@ abstract class Scene {
 
         Page.Canvas.Observers.mouseMove.push(this.onMouseMove);
         Page.Canvas.Observers.mouseUp.push(this.onMouseUp);
-        this.svgCanvas.onMouseUp.push(this.onMouseUpRight);
+        this.svgCanvas.onRightClick.push(this.onRightClick);
 
         for (const gear of [this.mainGear, ...this.secondaryGears]) {
             this.svgCanvas.addChild(gear.svgElement);
@@ -135,7 +133,7 @@ abstract class Scene {
     public detach(): void {
         removeFromArray(Page.Canvas.Observers.mouseMove, this.onMouseMove);
         removeFromArray(Page.Canvas.Observers.mouseUp, this.onMouseUp);
-        removeFromArray(this.svgCanvas.onMouseUp, this.onMouseUpRight);
+        removeFromArray(this.svgCanvas.onRightClick, this.onRightClick);
     }
 
     protected tryBuildGear(center: Point): Gear | null {
