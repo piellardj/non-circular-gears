@@ -24,6 +24,7 @@ abstract class Scene {
 
     private readonly onMouseMove: VoidFunction;
     private readonly onMouseUp: VoidFunction;
+    private readonly onMouseUpRight: (event: MouseEvent) => void;
 
     private mobileGear: Gear | null = null;
 
@@ -62,30 +63,45 @@ abstract class Scene {
         this.mainGear = mainGear;
 
         this.onMouseMove = () => {
-            const aspectRatio = Page.Canvas.getAspectRatio();
-            const mousePosition = Page.Canvas.getMousePosition();
-            const center = {
-                x: (2 * mousePosition[0] - 1) * Math.max(1, aspectRatio),
-                y: (2 * mousePosition[1] - 1) * Math.max(1, 1 / aspectRatio),
-            };
+            const center = this.getMousePosition();
 
             if (this.mobileGear) {
                 this.svgCanvas.removeChild(this.mobileGear.svgElement);
+                this.mobileGear = null;
             }
-            this.mobileGear = this.tryBuildGear(center);
 
-            if (this.mobileGear) {
-                this.svgCanvas.cursor = "";
-                this.svgCanvas.addChild(this.mobileGear.svgElement);
-            } else {
-                this.svgCanvas.cursor = "not-allowed";
+            const hoveredGear = this.getHoveredGear();
+            if (!hoveredGear) {
+                this.mobileGear = this.tryBuildGear(center);
+                if (this.mobileGear) {
+                    this.svgCanvas.addChild(this.mobileGear.svgElement);
+                }
             }
+
+            this.svgCanvas.cursor = (this.mobileGear || hoveredGear) ? "" : "not-allowed";
         };
 
         this.onMouseUp = () => {
             if (this.mobileGear) {
                 this.secondaryGears.push(this.mobileGear);
                 this.mobileGear = null;
+            }
+        };
+        this.onMouseUpRight = (event: MouseEvent) => {
+            if (event.button === 2) { // right button
+                const hoveredGear = this.getHoveredGear();
+                if (hoveredGear) {
+                    const newSecondaryGears: Gear[] = [];
+                    for (const gear of this.secondaryGears) {
+                        if (gear.isChildOf(hoveredGear)) {
+                            this.svgCanvas.removeChild(gear.svgElement);
+                        } else {
+                            newSecondaryGears.push(gear);
+                        }
+                    }
+                    this.secondaryGears = newSecondaryGears;
+                    this.onMouseMove();
+                }
             }
         };
     }
@@ -107,6 +123,7 @@ abstract class Scene {
 
         Page.Canvas.Observers.mouseMove.push(this.onMouseMove);
         Page.Canvas.Observers.mouseUp.push(this.onMouseUp);
+        this.svgCanvas.onMouseUp.push(this.onMouseUpRight);
 
         for (const gear of [this.mainGear, ...this.secondaryGears]) {
             this.svgCanvas.addChild(gear.svgElement);
@@ -116,6 +133,7 @@ abstract class Scene {
     public detach(): void {
         removeFromArray(Page.Canvas.Observers.mouseMove, this.onMouseMove);
         removeFromArray(Page.Canvas.Observers.mouseUp, this.onMouseUp);
+        removeFromArray(this.svgCanvas.onMouseUp, this.onMouseUpRight);
     }
 
     protected tryBuildGear(center: Point): Gear | null {
@@ -165,6 +183,24 @@ abstract class Scene {
             gear.updateDisplay(surfaceType);
         }
         this.mobileGear?.updateDisplay(surfaceType);
+
+        const hoveredGear = this.getHoveredGear();
+        const hoveredOpacity = (0.6 + 0.3 * (0.5 + 0.5 * Math.cos(performance.now() / 150))).toFixed(2);
+        for (const gear of this.secondaryGears) {
+            if (hoveredGear && gear.isChildOf(hoveredGear)) {
+                gear.svgElement.style.opacity = hoveredOpacity;
+            } else {
+                gear.svgElement.style.opacity = "";
+            }
+        }
+    }
+
+    private getHoveredGear(): Gear | null {
+        if (!this.mobileGear) {
+            const mousePosition = this.getMousePosition();
+            return this.secondaryGears.find(gear => gear.isPointInside(mousePosition)) || null;
+        }
+        return null;
     }
 
     private findClosestGear(center: Point): Gear {
@@ -180,6 +216,15 @@ abstract class Scene {
         }
 
         return closestGear;
+    }
+
+    private getMousePosition(): Point {
+        const aspectRatio = Page.Canvas.getAspectRatio();
+        const mousePosition = Page.Canvas.getMousePosition();
+        return {
+            x: (2 * mousePosition[0] - 1) * Math.max(1, aspectRatio),
+            y: (2 * mousePosition[1] - 1) * Math.max(1, 1 / aspectRatio),
+        };
     }
 }
 

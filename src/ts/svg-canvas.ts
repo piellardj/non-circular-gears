@@ -2,11 +2,15 @@
 
 import { downloadTextFile } from "./utils";
 
+type OnMouseUp = (event: MouseEvent) => void;
+
 class SvgCanvas {
     private readonly svg: SVGSVGElement;
     private readonly styleElement: SVGStyleElement;
     private readonly backgroundElement: SVGElement;
     private readonly canvasContainer: HTMLElement;
+
+    public onMouseUp: OnMouseUp[] = [];
 
     public constructor() {
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -42,6 +46,14 @@ class SvgCanvas {
         }
         this.canvasContainer = canvasContainer;
         this.canvasContainer.insertBefore(this.svg, Page.Canvas.getCanvas());
+        this.canvasContainer.addEventListener("mouseup", (event: MouseEvent) => {
+            for (const observer of this.onMouseUp) {
+                observer(event);
+            }
+        });
+        this.canvasContainer.addEventListener("contextmenu", (event: Event) => {
+            event.preventDefault();
+        });
     }
 
     public clear(): void {

@@ -53,7 +53,7 @@ class Gear {
     public static readonly gearAxisClass: string = "gear-axis";
 
     public static create(center: ReadonlyPoint, polarCurve: PolarCurve): Gear {
-        return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1);
+        return new Gear(center, polarCurve.periodRays, polarCurve.periodsCount, +1, null);
     }
 
     public static slaveGear(idealCenter: ReadonlyPoint, master: Gear): Gear | null {
@@ -161,7 +161,7 @@ class Gear {
         periodRays: ReadonlyArray<Ray>,
         private readonly periodsCount: number,
         private readonly orientation: number,
-        private readonly parent?: Gear) {
+        private readonly parent: Gear | null) {
         let minRadius = 10000000000;
         let maxRadius = -10000000000;
         periodRays.forEach(ray => {
@@ -266,6 +266,24 @@ class Gear {
 
             this.svgRepresentation.currentSurfaceType = surfaceType;
         }
+    }
+
+    public isPointInside(position: ReadonlyPoint): boolean {
+        const dX = position.x - this.center.x;
+        const dY = position.y - this.center.y;
+        const d = dX * dX + dY * dY;
+        return d < this.minRadius * this.minRadius;
+    }
+
+    public isChildOf(otherGear: Gear): boolean {
+        let current: Gear | null = this; // eslint-disable-line @typescript-eslint/no-this-alias
+        while (current) {
+            if (current === otherGear) {
+                return true;
+            }
+            current = current.parent;
+        }
+        return false;
     }
 
     private setRotationInternal(rotation: number): void {
