@@ -34,7 +34,7 @@ abstract class Scene {
             const flatStyle = (Parameters.displayStyle === EDisplayStyle.FLAT);
             const gearColor = "red";
             const gearMainColor = "#FF6A00";
-            const axisColor = flatStyle ? "#333333": "green";
+            const axisColor = flatStyle ? "#333333" : "green";
 
             const newStyle = `.${Gear.gearClass} {
     fill:           ${gearColor};
@@ -184,6 +184,6 @@ abstract class Scene {
 }
 
 export {
-    Scene,
+    Scene
 };
 

@@ -36,7 +36,11 @@ class SvgCanvas {
         Page.Canvas.Observers.canvasResize.push(adjustAspectRatio);
         adjustAspectRatio();
 
-        this.canvasContainer = Page.Canvas.getCanvasContainer()!;
+        const canvasContainer = Page.Canvas.getCanvasContainer();
+        if (!canvasContainer) {
+            throw new Error();
+        }
+        this.canvasContainer = canvasContainer;
         this.canvasContainer.insertBefore(this.svg, Page.Canvas.getCanvas());
     }
 
