@@ -37,11 +37,14 @@ abstract class Scene {
             const flatStyle = (Parameters.displayStyle === EDisplayStyle.FLAT);
             const gearColor = "red";
             const gearMainColor = "#FF6A00";
+            const gearOpacity = flatStyle ? 0.7 : 0.4;
+            const gearHoverOpacityFrom = flatStyle ? 0.6 : 0.35;
+            const gearHoverOpacityTo = flatStyle ? 0.45 : 0.15;
             const axisColor = flatStyle ? "#333333" : "green";
 
             const newStyle = `.${Gear.gearClass} {
     fill:           ${gearColor};
-    fill-opacity:   ${flatStyle ? 0.7 : 0.4};
+    fill-opacity:   ${gearOpacity};
     stroke:         ${gearColor};
     stroke-width:   ${flatStyle ? 0 : 0.004};
 }
@@ -56,7 +59,15 @@ abstract class Scene {
 }
 .${Gear.gearAxisClass} {
     fill: ${axisColor};
-}`;
+}
+@keyframes hover-animation {
+    from { fill-opacity: ${gearHoverOpacityFrom}; }
+    to { fill-opacity: ${gearHoverOpacityTo}; }
+}
+.${Gear.hoveredGearClass} .${Gear.gearClass} {
+    animation: hover-animation .75s ease-in-out infinite alternate;
+}
+`;
             this.svgCanvas.setStyle(newStyle);
         };
         Parameters.onDisplayStyleChange.push(updateStyle);
@@ -185,13 +196,8 @@ abstract class Scene {
         this.mobileGear?.updateDisplay(surfaceType);
 
         const hoveredGear = this.getHoveredGear();
-        const hoveredOpacity = (0.6 + 0.3 * (0.5 + 0.5 * Math.cos(performance.now() / 150))).toFixed(2);
         for (const gear of this.secondaryGears) {
-            if (hoveredGear && gear.isChildOf(hoveredGear)) {
-                gear.svgElement.style.opacity = hoveredOpacity;
-            } else {
-                gear.svgElement.style.opacity = "";
-            }
+            gear.svgElement.classList.toggle(Gear.hoveredGearClass, !!hoveredGear && gear.isChildOf(hoveredGear));
         }
     }
 

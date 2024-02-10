@@ -47,6 +47,7 @@ type SvgRepresentation = {
 class Gear {
     public static readonly centerRadius = 0.015;
 
+    public static readonly hoveredGearClass: string = "hovered-gear";
     public static readonly gearClass: string = "gear";
     public static readonly gearMainClass: string = "main";
     public static readonly gearRaysClass: string = "gear-rays";
