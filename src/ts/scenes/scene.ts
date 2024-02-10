@@ -16,6 +16,8 @@ function removeFromArray<T>(array: T[], element: T): void {
     }
 }
 
+const isMobile = "ontouchstart" in window && window.innerWidth < 900;
+
 abstract class Scene {
     protected readonly mainGear: Gear;
     protected secondaryGears: Gear[] = [];
@@ -196,7 +198,7 @@ abstract class Scene {
     }
 
     private getHoveredGear(): Gear | null {
-        if (!this.mobileGear) {
+        if (!this.mobileGear && !isMobile) {
             const mousePosition = this.getMousePosition();
             return this.secondaryGears.find(gear => gear.isPointInside(mousePosition)) || null;
         }
